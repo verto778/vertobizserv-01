@@ -1,0 +1,248 @@
+
+import React, { useState } from 'react';
+import { format } from 'date-fns';
+import { Pencil, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
+
+interface Client {
+  id: string;
+  companyName: string;
+  recruiterName: string;
+  position: string;
+  email: string;
+}
+
+interface Position {
+  id: string;
+  name: string;
+}
+
+interface Candidate {
+  id: string;
+  interviewDate: Date | null;
+  interviewTime: string;
+  interviewRound: string;
+  name: string;
+  contactNumber: string;
+  email: string;
+  interviewMode: string;
+  status1: string;
+  status2: string;
+  clientId: string;
+  clientName: string;
+  position: string;
+  recruiterName: string;
+  dateInformed: Date | null;
+  remarks?: string;
+  manager?: string;
+}
+
+interface CandidateTableProps {
+  candidates: Candidate[];
+  onEdit: (candidate: Candidate) => void;
+  onDelete?: (candidateId: string) => void;
+  positions: Position[];
+}
+
+const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onDelete, positions }) => {
+  const { isSuperAdmin } = useSuperAdmin();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [candidateToDelete, setCandidateToDelete] = useState<Candidate | null>(null);
+
+  const getPositionNameById = (id: string) => {
+    const match = positions.find(pos => pos.id === id);
+    return match ? match.name : id;
+  };
+
+  const handleDeleteClick = (candidate: Candidate) => {
+    console.log('Delete clicked for candidate:', {
+      id: candidate.id,
+      name: candidate.name,
+      idType: typeof candidate.id,
+      idLength: candidate.id?.length
+    });
+    setCandidateToDelete(candidate);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!candidateToDelete || !onDelete) {
+      console.error('Cannot delete: missing candidate or onDelete function');
+      return;
+    }
+
+    const candidateId = candidateToDelete.id;
+    
+    // Validate candidate ID
+    if (!candidateId || typeof candidateId !== 'string' || candidateId.trim() === '') {
+      console.error('Cannot delete candidate: invalid ID');
+      return;
+    }
+
+    console.log('Proceeding with delete for candidate:', {
+      id: candidateId,
+      name: candidateToDelete.name
+    });
+    
+    onDelete(candidateId);
+    setDeleteConfirmOpen(false);
+    setCandidateToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmOpen(false);
+    setCandidateToDelete(null);
+  };
+
+  if (candidates.length === 0) {
+    return (
+      <div className="p-6 text-center text-gray-500">
+        No candidates added yet. Add a candidate to get started.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Interview Date & Time</TableHead>
+            <TableHead>Round</TableHead>
+            <TableHead>Candidate</TableHead>
+            <TableHead>Mobile</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Mode</TableHead>
+            <TableHead>Status 1</TableHead>
+            <TableHead>Status 2</TableHead>
+            <TableHead>Client</TableHead>
+            <TableHead>Position</TableHead>
+            <TableHead>Recruiter</TableHead>
+            <TableHead>Manager</TableHead>
+            <TableHead>Info Date</TableHead>
+            <TableHead>Remarks</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {candidates.map((candidate) => (
+            <TableRow key={candidate.id}>
+              <TableCell>
+                {candidate.interviewDate ? (
+                  `${format(candidate.interviewDate, 'PP')} ${candidate.interviewTime ? `at ${candidate.interviewTime}` : ''}`
+                ) : (
+                  'Not scheduled'
+                )}
+              </TableCell>
+              <TableCell>{candidate.interviewRound}</TableCell>
+              <TableCell>{candidate.name}</TableCell>
+              <TableCell>{candidate.contactNumber}</TableCell>
+              <TableCell>{candidate.email || 'N/A'}</TableCell>
+              <TableCell>{candidate.interviewMode}</TableCell>
+              <TableCell>
+                <span className={cn(
+                  "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
+                  candidate.status1 === "Attended" && "bg-green-100 text-green-800",
+                  candidate.status1 === "Confirmed" && "bg-blue-100 text-blue-800",
+                  candidate.status1 === "Yet to Confirm" && "bg-yellow-100 text-yellow-800",
+                  candidate.status1 === "Not Attended" && "bg-red-100 text-red-800",
+                  candidate.status1 === "Not Interested" && "bg-gray-100 text-gray-800",
+                  candidate.status1 === "Client Conf Pending" && "bg-indigo-100 text-indigo-800",
+                  candidate.status1 === "Position Hold" && "bg-purple-100 text-purple-800",
+                  candidate.status1 === "Reschedule" && "bg-orange-100 text-orange-800",
+                )}>
+                  {candidate.status1}
+                </span>
+              </TableCell>
+              <TableCell>
+                <span className={cn(
+                  "px-2 inline-flex text-xs leading-5 font-semibold rounded-full",
+                  candidate.status2 === "Selected" && "bg-green-100 text-green-800",
+                  candidate.status2 === "Shortlisted" && "bg-blue-100 text-blue-800",
+                  candidate.status2 === "Hold" && "bg-yellow-100 text-yellow-800",
+                  candidate.status2 === "Interview Reject" && "bg-red-100 text-red-800",
+                  candidate.status2 === "Final Reject" && "bg-red-100 text-red-800",
+                  candidate.status2 === "Drop" && "bg-gray-100 text-gray-800",
+                  candidate.status2 === "Documentation" && "bg-purple-100 text-purple-800",
+                  candidate.status2 === "Feedback Awaited" && "bg-orange-100 text-orange-800",
+                )}>
+                  {candidate.status2}
+                </span>
+              </TableCell>
+              <TableCell>{candidate.clientName}</TableCell>
+              <TableCell>{getPositionNameById(candidate.position)}</TableCell>
+              <TableCell>{candidate.recruiterName}</TableCell>
+              <TableCell>{candidate.manager || '-'}</TableCell>
+              <TableCell>
+                {candidate.dateInformed ? format(candidate.dateInformed, 'PP') : 'Not set'}
+              </TableCell>
+              <TableCell>
+                <div className="max-w-xs truncate" title={candidate.remarks || ''}>
+                  {candidate.remarks || '-'}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => onEdit(candidate)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  {isSuperAdmin && onDelete && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleDeleteClick(candidate)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Candidate</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{candidateToDelete?.name}</strong>? 
+              This action cannot be undone and will permanently remove all candidate information.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDelete}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default CandidateTable;
