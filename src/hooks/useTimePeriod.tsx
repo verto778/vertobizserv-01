@@ -17,7 +17,7 @@ export const useTimePeriod = () => {
 };
 
 export const TimePeriodProvider = ({ children }: { children: ReactNode }) => {
-  const [timePeriod, setTimePeriod] = useState('30');
+  const [timePeriod, setTimePeriod] = useState('90');
 
   return (
     <TimePeriodContext.Provider value={{ timePeriod, setTimePeriod }}>
