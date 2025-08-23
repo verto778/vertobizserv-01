@@ -4,12 +4,42 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { format, startOfToday, endOfToday } from 'date-fns';
 
+// Helper function to convert time to 24-hour format for sorting
+const convertTo24Hour = (time: string): string => {
+  if (time === 'N/A' || !time) return '99:99'; // Put N/A times at the end
+  
+  // If already in 24-hour format (contains :), return as is
+  if (time.includes(':')) {
+    return time.padStart(5, '0'); // Ensure 2-digit format (08:00)
+  }
+  
+  // Handle various time formats
+  const lowerTime = time.toLowerCase().trim();
+  
+  // Extract hour and handle AM/PM
+  let hour = parseInt(lowerTime);
+  const isAM = lowerTime.includes('am');
+  const isPM = lowerTime.includes('pm');
+  
+  if (isNaN(hour)) return '99:99';
+  
+  // Convert to 24-hour format
+  if (isPM && hour !== 12) {
+    hour += 12;
+  } else if (isAM && hour === 12) {
+    hour = 0;
+  }
+  
+  return `${hour.toString().padStart(2, '0')}:00`;
+};
+
 export interface TodayInterview {
   candidate: string;
   mobile: string;
   client: string;
   position: string;
   recruiter: string;
+  manager: string;
   time: string;
   mode: string;
   status1: string;
@@ -52,10 +82,21 @@ export const useTodaysInterviews = () => {
               client: candidate.client_name || 'N/A',
               position: candidate.position || 'N/A',
               recruiter: candidate.recruiter_name || 'N/A',
+              manager: candidate.Manager || 'N/A',
               time: candidate.interview_time || 'N/A',
               mode: candidate.interview_mode || 'N/A',
               status1: candidate.status1 || 'Pending'
-            }));
+            }))
+            .sort((a, b) => {
+              // Sort by time - convert to 24-hour format for comparison
+              if (a.time === 'N/A') return 1;
+              if (b.time === 'N/A') return -1;
+              
+              const timeA = convertTo24Hour(a.time);
+              const timeB = convertTo24Hour(b.time);
+              
+              return timeA.localeCompare(timeB);
+            });
           
           setInterviews(formattedInterviews);
         }

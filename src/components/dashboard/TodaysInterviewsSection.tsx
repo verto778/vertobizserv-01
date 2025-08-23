@@ -34,6 +34,7 @@ const TodaysInterviewsSection: React.FC = () => {
                 <TableHead>Client</TableHead>
                 <TableHead>Position</TableHead>
                 <TableHead>Recruiter</TableHead>
+                <TableHead>Manager</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead>Mode</TableHead>
                 <TableHead>Status 1</TableHead>
@@ -48,6 +49,7 @@ const TodaysInterviewsSection: React.FC = () => {
                     <TableCell>{interview.client}</TableCell>
                     <TableCell>{interview.position}</TableCell>
                     <TableCell>{interview.recruiter}</TableCell>
+                    <TableCell>{interview.manager}</TableCell>
                     <TableCell>{interview.time}</TableCell>
                     <TableCell>{interview.mode}</TableCell>
                     <TableCell>
@@ -63,7 +65,7 @@ const TodaysInterviewsSection: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-500 py-4">
+                  <TableCell colSpan={9} className="text-center text-gray-500 py-4">
                     No interviews scheduled for today.
                   </TableCell>
                 </TableRow>
