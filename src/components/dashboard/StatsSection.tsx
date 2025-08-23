@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
-import { Users, ThumbsUp, Clock, HelpCircle } from 'lucide-react';
+import { Users, ThumbsDown, Clock, HelpCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useTimePeriod } from '@/hooks/useTimePeriod';
@@ -56,7 +56,7 @@ const StatsSection: React.FC = () => {
           <StatCard 
             title="Not Interested" 
             value={statistics.notInterested} 
-            icon={<ThumbsUp className="h-5 w-5 text-red-600" />}
+            icon={<ThumbsDown className="h-5 w-5 text-red-600" />}
             className="border-red-100 bg-gradient-to-br from-white to-red-50 shadow-md"
           />
           <StatCard 
