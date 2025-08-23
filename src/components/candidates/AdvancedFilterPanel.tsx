@@ -19,6 +19,7 @@ export interface FilterState {
   clientName: string;
   position: string;
   interviewDate: Date | null;
+  manager: string;
 }
 
 interface AdvancedFilterPanelProps {
@@ -30,6 +31,7 @@ interface AdvancedFilterPanelProps {
   onClearFilters: () => void;
   clients: Array<{ id: string; companyName: string; position?: string }>;
   positions: Array<{ id: string; name: string }>;
+  candidates: Array<{ manager?: string }>;
 }
 
 const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
@@ -40,10 +42,22 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
   onDateFilterChange,
   onClearFilters,
   clients,
-  positions
+  positions,
+  candidates
 }) => {
   const [sortClientsAlphabetically, setSortClientsAlphabetically] = useState(false);
   const [sortPositionsAlphabetically, setSortPositionsAlphabetically] = useState(false);
+
+  // Get unique managers from candidates
+  const uniqueManagers = useMemo(() => {
+    const managers = new Set<string>();
+    candidates.forEach(candidate => {
+      if (candidate.manager && candidate.manager.trim() !== '') {
+        managers.add(candidate.manager);
+      }
+    });
+    return Array.from(managers).sort();
+  }, [candidates]);
 
   // Get the selected client ID based on the client name
   const selectedClientId = useMemo(() => {
@@ -114,6 +128,8 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
         return `Position: ${value}`;
       case 'interviewDate':
         return `Date: ${value instanceof Date ? format(value, 'PPP') : value}`;
+      case 'manager':
+        return `Manager: ${value}`;
       default:
         return value?.toString() || '';
     }
@@ -345,7 +361,7 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
               </div>
             </div>
 
-            {/* Third Row - Interview Date */}
+            {/* Third Row - Interview Date, Manager */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Interview Date</label>
@@ -372,6 +388,26 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
                     />
                   </PopoverContent>
                 </Popover>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Manager</label>
+                <Select 
+                  value={filters.manager} 
+                  onValueChange={(value) => onFilterChange('manager', value === 'all_managers' ? '' : value)}
+                >
+                  <SelectTrigger className="border-gray-300 bg-white">
+                    <SelectValue placeholder="All Managers" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-white">
+                    <SelectItem value="all_managers">All Managers</SelectItem>
+                    {uniqueManagers.map((manager) => (
+                      <SelectItem key={manager} value={manager}>
+                        {manager}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>

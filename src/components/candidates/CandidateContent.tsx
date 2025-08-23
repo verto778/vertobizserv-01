@@ -173,6 +173,7 @@ const CandidateContent: React.FC<CandidateContentProps> = ({
         onClearFilters={clearFilters}
         clients={clients}
         positions={positions}
+        candidates={candidates}
       />
       
       {sortedCandidates.length === 0 ? (

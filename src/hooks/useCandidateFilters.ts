@@ -10,6 +10,7 @@ export interface FilterState {
   clientName: string;
   position: string;
   interviewDate: Date | null;
+  manager: string;
 }
 
 const initialFilterState: FilterState = {
@@ -19,7 +20,8 @@ const initialFilterState: FilterState = {
   round: '',
   clientName: '',
   position: '',
-  interviewDate: null
+  interviewDate: null,
+  manager: ''
 };
 
 export const useCandidateFilters = (candidates: Candidate[]) => {
@@ -97,6 +99,11 @@ export const useCandidateFilters = (candidates: Candidate[]) => {
         if (filterDate.getTime() !== candidateDate.getTime()) {
           return false;
         }
+      }
+
+      // Manager filter
+      if (filters.manager && filters.manager !== 'all_managers' && candidate.manager !== filters.manager) {
+        return false;
       }
 
       return true;
