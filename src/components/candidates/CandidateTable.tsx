@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
@@ -61,11 +61,55 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
   const { isSuperAdmin } = useSuperAdmin();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [candidateToDelete, setCandidateToDelete] = useState<Candidate | null>(null);
+  const [sortField, setSortField] = useState<keyof Candidate | 'interviewDateTime'>('interviewDateTime');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const getPositionNameById = (id: string) => {
     const match = positions.find(pos => pos.id === id);
     return match ? match.name : id;
   };
+
+  const handleSort = (field: keyof Candidate | 'interviewDateTime') => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedCandidates = [...candidates].sort((a, b) => {
+    let aValue: any;
+    let bValue: any;
+
+    if (sortField === 'interviewDateTime') {
+      // Sort by date and time combined
+      const aDateTime = a.interviewDate ? new Date(`${a.interviewDate.toDateString()} ${a.interviewTime || '00:00'}`) : new Date(0);
+      const bDateTime = b.interviewDate ? new Date(`${b.interviewDate.toDateString()} ${b.interviewTime || '00:00'}`) : new Date(0);
+      aValue = aDateTime.getTime();
+      bValue = bDateTime.getTime();
+    } else {
+      aValue = a[sortField];
+      bValue = b[sortField];
+    }
+    
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortDirection === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+    
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+    }
+    
+    // Handle null/undefined values
+    if (!aValue && !bValue) return 0;
+    if (!aValue) return sortDirection === 'asc' ? 1 : -1;
+    if (!bValue) return sortDirection === 'asc' ? -1 : 1;
+    
+    return 0;
+  });
 
   const handleDeleteClick = (candidate: Candidate) => {
     console.log('Delete clicked for candidate:', {
@@ -107,6 +151,20 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
     setCandidateToDelete(null);
   };
 
+  const SortButton: React.FC<{ field: keyof Candidate | 'interviewDateTime'; children: React.ReactNode }> = ({ field, children }) => (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-auto p-0 font-medium hover:bg-transparent"
+      onClick={() => handleSort(field)}
+    >
+      {children}
+      {sortField === field && (
+        sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
+      )}
+    </Button>
+  );
+
   if (candidates.length === 0) {
     return (
       <div className="p-6 text-center text-gray-500">
@@ -120,25 +178,39 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Interview Date & Time</TableHead>
+            <TableHead>
+              <SortButton field="interviewDateTime">Interview Date & Time</SortButton>
+            </TableHead>
             <TableHead>Round</TableHead>
             <TableHead>Candidate</TableHead>
             <TableHead>Mobile</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Mode</TableHead>
-            <TableHead>Status 1</TableHead>
-            <TableHead>Status 2</TableHead>
-            <TableHead>Client</TableHead>
-            <TableHead>Position</TableHead>
-            <TableHead>Recruiter</TableHead>
-            <TableHead>Manager</TableHead>
+            <TableHead>
+              <SortButton field="status1">Status 1</SortButton>
+            </TableHead>
+            <TableHead>
+              <SortButton field="status2">Status 2</SortButton>
+            </TableHead>
+            <TableHead>
+              <SortButton field="clientName">Client</SortButton>
+            </TableHead>
+            <TableHead>
+              <SortButton field="position">Position</SortButton>
+            </TableHead>
+            <TableHead>
+              <SortButton field="recruiterName">Recruiter</SortButton>
+            </TableHead>
+            <TableHead>
+              <SortButton field="manager">Manager</SortButton>
+            </TableHead>
             <TableHead>Info Date</TableHead>
             <TableHead>Remarks</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {candidates.map((candidate) => (
+          {sortedCandidates.map((candidate) => (
             <TableRow key={candidate.id}>
               <TableCell>
                 {candidate.interviewDate ? (
