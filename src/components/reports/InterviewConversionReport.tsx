@@ -46,6 +46,7 @@ const InterviewConversionReport: React.FC = () => {
   // Initialize with empty arrays for filters (no filtering applied)
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [selectedRecruiters, setSelectedRecruiters] = useState<string[]>([]);
+  const [selectedManagers, setSelectedManagers] = useState<string[]>([]);
   
   // Initialize with undefined for date range (no filtering applied initially)
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
@@ -54,6 +55,17 @@ const InterviewConversionReport: React.FC = () => {
   const { clients } = useClientData();
   const { recruiters } = useRecruiters(true);
   const { exportToExcel } = useFilteredData();
+
+  // Get unique managers from candidates data
+  const managers = useMemo(() => {
+    const uniqueManagers = new Set<string>();
+    candidates.forEach(candidate => {
+      if (candidate.manager && candidate.manager.trim() !== '') {
+        uniqueManagers.add(candidate.manager);
+      }
+    });
+    return Array.from(uniqueManagers).map(name => ({ id: name, name }));
+  }, [candidates]);
 
   // Custom status checking functions based on user requirements
   const checkCandidateStatus = (candidate: Candidate, category: string): boolean => {
@@ -105,6 +117,11 @@ const InterviewConversionReport: React.FC = () => {
       
       // Filter by selected recruiters
       if (selectedRecruiters.length > 0 && !selectedRecruiters.includes(candidate.recruiterName)) {
+        return false;
+      }
+      
+      // Filter by selected managers
+      if (selectedManagers.length > 0 && !selectedManagers.includes(candidate.manager || '')) {
         return false;
       }
       
@@ -167,7 +184,7 @@ const InterviewConversionReport: React.FC = () => {
       if (a.year !== b.year) return a.year - b.year;
       return a.month.localeCompare(b.month);
     });
-  }, [candidates, selectedClients, selectedRecruiters, dateRange]);
+  }, [candidates, selectedClients, selectedRecruiters, selectedManagers, dateRange]);
 
   // Calculate percentage data
   const percentageData = useMemo((): PercentageDataItem[] => {
@@ -261,7 +278,9 @@ const InterviewConversionReport: React.FC = () => {
           <AttendedCasesReports 
             selectedClients={selectedClients}
             selectedRecruiters={selectedRecruiters}
+            selectedManagers={selectedManagers}
             dateRange={dateRange}
+            managers={managers}
           />
         </TabsContent>
 

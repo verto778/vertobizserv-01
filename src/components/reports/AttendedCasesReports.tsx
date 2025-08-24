@@ -32,16 +32,21 @@ interface AttendedCasesData {
 interface AttendedCasesReportsProps {
   selectedClients?: string[];
   selectedRecruiters?: string[];
+  selectedManagers?: string[];
   dateRange?: { from?: Date; to?: Date };
+  managers?: { id: string; name: string; }[];
 }
 
 const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
   selectedClients = [],
   selectedRecruiters = [],
-  dateRange
+  selectedManagers = [],
+  dateRange,
+  managers = []
 }) => {
   const [localSelectedClients, setLocalSelectedClients] = useState<string[]>([]);
   const [localSelectedRecruiters, setLocalSelectedRecruiters] = useState<string[]>([]);
+  const [localSelectedManagers, setLocalSelectedManagers] = useState<string[]>([]);
   const [timeRange, setTimeRange] = useState('6'); // Default 6 months
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   
@@ -53,6 +58,7 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
   // Use props if provided, otherwise use local state
   const finalSelectedClients = selectedClients.length > 0 ? selectedClients : localSelectedClients;
   const finalSelectedRecruiters = selectedRecruiters.length > 0 ? selectedRecruiters : localSelectedRecruiters;
+  const finalSelectedManagers = selectedManagers.length > 0 ? selectedManagers : localSelectedManagers;
 
   // Custom status checking function based on user requirements - matching InterviewConversionReport logic
   const checkCandidateStatus = (candidate: Candidate, category: string): boolean => {
@@ -137,6 +143,11 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
         return false;
       }
       
+      // Filter by selected managers
+      if (finalSelectedManagers.length > 0 && !finalSelectedManagers.includes(candidate.manager || '')) {
+        return false;
+      }
+      
       return true;
     });
 
@@ -216,7 +227,7 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
 
     console.log('Final monthly data:', monthlyData);
     return monthlyData;
-  }, [candidates, finalSelectedClients, finalSelectedRecruiters, timeRange, customDateRange, dateRange]);
+  }, [candidates, finalSelectedClients, finalSelectedRecruiters, finalSelectedManagers, timeRange, customDateRange, dateRange]);
 
   // Calculate percentage data for Report2b
   const attendedCasesPercentageData = useMemo((): AttendedCasesData[] => {
@@ -278,7 +289,7 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
   return (
     <div className="space-y-6">
       {/* Show filters only if not controlled by parent */}
-      {selectedClients.length === 0 && selectedRecruiters.length === 0 && !dateRange && (
+      {selectedClients.length === 0 && selectedRecruiters.length === 0 && selectedManagers.length === 0 && !dateRange && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -291,10 +302,13 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
               <ReportFilters
                 clients={clients}
                 recruiters={recruiters}
+                managers={managers}
                 selectedClients={localSelectedClients}
                 selectedRecruiters={localSelectedRecruiters}
+                selectedManagers={localSelectedManagers}
                 onClientsChange={setLocalSelectedClients}
                 onRecruitersChange={setLocalSelectedRecruiters}
+                onManagersChange={setLocalSelectedManagers}
               />
               <div className="space-y-2">
                 <label className="text-sm font-medium">Time Range</label>
