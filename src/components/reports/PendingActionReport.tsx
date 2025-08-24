@@ -19,6 +19,7 @@ export interface PendingActionData {
   candidateName: string;
   clientName: string;
   recruiterName: string;
+  manager: string;
   position: string;
   status: string;
   daysPending: number;
@@ -30,6 +31,7 @@ export interface PendingActionData {
 const PendingActionReport: React.FC = () => {
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [selectedRecruiters, setSelectedRecruiters] = useState<string[]>([]);
+  const [selectedManagers, setSelectedManagers] = useState<string[]>([]);
   
   const { candidates, loading } = useCandidateManagement();
   const { clients } = useClientData();
@@ -74,12 +76,13 @@ const PendingActionReport: React.FC = () => {
       
       const matchesClient = selectedClients.length === 0 || selectedClients.includes(candidate.clientName);
       const matchesRecruiter = selectedRecruiters.length === 0 || selectedRecruiters.includes(candidate.recruiterName);
+      const matchesManager = selectedManagers.length === 0 || selectedManagers.includes(candidate.manager || '');
       
       if (!isPending) {
         console.log(`❌ Candidate ${candidate.name} - Status1 '${candidate.status1}', Status2 '${candidate.status2}' not pending`);
       }
       
-      return isPending && matchesClient && matchesRecruiter;
+      return isPending && matchesClient && matchesRecruiter && matchesManager;
     });
     
     console.log('✅ Filtered pending candidates:', filteredCandidates.length);
@@ -125,6 +128,7 @@ const PendingActionReport: React.FC = () => {
           candidateName: candidate.name,
           clientName: candidate.clientName,
           recruiterName: candidate.recruiterName,
+          manager: candidate.manager || '-',
           position: candidate.position,
           status: statusToUse,
           daysPending,
@@ -156,7 +160,18 @@ const PendingActionReport: React.FC = () => {
     console.log('📈 Status distribution:', statusDistribution);
     
     return processedData;
-  }, [candidates, selectedClients, selectedRecruiters]);
+  }, [candidates, selectedClients, selectedRecruiters, selectedManagers]);
+
+  // Get unique managers from candidates data
+  const managers = useMemo(() => {
+    const uniqueManagers = new Set<string>();
+    candidates.forEach(candidate => {
+      if (candidate.manager && candidate.manager.trim() !== '') {
+        uniqueManagers.add(candidate.manager);
+      }
+    });
+    return Array.from(uniqueManagers).map(name => ({ id: name, name }));
+  }, [candidates]);
 
   // Create chart data with enhanced mapping - this handles both status1 and status2
   const chartData = useMemo(() => {
@@ -247,10 +262,13 @@ const PendingActionReport: React.FC = () => {
       <ReportFilters
         clients={clients}
         recruiters={recruiters}
+        managers={managers}
         selectedClients={selectedClients}
         selectedRecruiters={selectedRecruiters}
+        selectedManagers={selectedManagers}
         onClientsChange={setSelectedClients}
         onRecruitersChange={setSelectedRecruiters}
+        onManagersChange={setSelectedManagers}
       />
 
       {/* Main Content Tabs */}

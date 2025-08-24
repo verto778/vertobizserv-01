@@ -111,6 +111,9 @@ const PendingActionTable: React.FC<PendingActionTableProps> = ({ data }) => {
               <SortButton field="recruiterName">Recruiter</SortButton>
             </TableHead>
             <TableHead>
+              <SortButton field="manager">Manager</SortButton>
+            </TableHead>
+            <TableHead>
               <SortButton field="position">Position</SortButton>
             </TableHead>
             <TableHead>
@@ -131,7 +134,7 @@ const PendingActionTable: React.FC<PendingActionTableProps> = ({ data }) => {
         <TableBody>
           {sortedData.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                 No pending actions found. Try adjusting your filters.
               </TableCell>
             </TableRow>
@@ -141,6 +144,7 @@ const PendingActionTable: React.FC<PendingActionTableProps> = ({ data }) => {
                 <TableCell className="font-medium">{item.candidateName}</TableCell>
                 <TableCell>{item.clientName}</TableCell>
                 <TableCell>{item.recruiterName}</TableCell>
+                <TableCell>{item.manager}</TableCell>
                 <TableCell>{item.position}</TableCell>
                 <TableCell>
                   <Badge className={getStatusBadgeColor(item.status)}>

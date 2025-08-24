@@ -10,22 +10,29 @@ import { Separator } from '@/components/ui/separator';
 interface ReportFiltersProps {
   clients: any[];
   recruiters: any[];
+  managers?: any[];
   selectedClients: string[];
   selectedRecruiters: string[];
+  selectedManagers?: string[];
   onClientsChange: (clients: string[]) => void;
   onRecruitersChange: (recruiters: string[]) => void;
+  onManagersChange?: (managers: string[]) => void;
 }
 
 const ReportFilters: React.FC<ReportFiltersProps> = ({
   clients,
   recruiters,
+  managers = [],
   selectedClients,
   selectedRecruiters,
+  selectedManagers = [],
   onClientsChange,
   onRecruitersChange,
+  onManagersChange = () => {},
 }) => {
   const [clientsOpen, setClientsOpen] = useState(false);
   const [recruitersOpen, setRecruitersOpen] = useState(false);
+  const [managersOpen, setManagersOpen] = useState(false);
 
   console.log('ReportFilters - clients:', clients);
   console.log('ReportFilters - recruiters:', recruiters);
@@ -44,12 +51,20 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
     onRecruitersChange(updated);
   };
 
+  const handleManagerToggle = (managerName: string) => {
+    const updated = selectedManagers.includes(managerName)
+      ? selectedManagers.filter(m => m !== managerName)
+      : [...selectedManagers, managerName];
+    onManagersChange(updated);
+  };
+
   const clearAllFilters = () => {
     onClientsChange([]);
     onRecruitersChange([]);
+    onManagersChange([]);
   };
 
-  const totalFilters = selectedClients.length + selectedRecruiters.length;
+  const totalFilters = selectedClients.length + selectedRecruiters.length + selectedManagers.length;
 
   // Get unique client names
   const uniqueClients = clients ? clients.filter((client, index, self) => {
@@ -61,6 +76,12 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
   const uniqueRecruiters = recruiters ? recruiters.filter((recruiter, index, self) => {
     const recruiterName = recruiter.name || recruiter.recruiter_name;
     return recruiterName && self.findIndex(r => (r.name || r.recruiter_name) === recruiterName) === index;
+  }) : [];
+
+  // Get unique manager names
+  const uniqueManagers = managers ? managers.filter((manager, index, self) => {
+    const managerName = manager.name;
+    return managerName && self.findIndex(m => m.name === managerName) === index;
   }) : [];
 
   return (
@@ -199,6 +220,74 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
           </PopoverContent>
         </Popover>
 
+        {/* Manager Filter - Only show if managers are provided */}
+        {managers.length > 0 && (
+          <Popover open={managersOpen} onOpenChange={setManagersOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8">
+                Manager Wise Filter
+                {selectedManagers.length > 0 && (
+                  <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
+                    {selectedManagers.length}
+                  </Badge>
+                )}
+                <ChevronDown className="ml-2 h-3 w-3" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 bg-white dark:bg-gray-800 border shadow-lg z-50" align="start">
+              <div className="space-y-2">
+                <h4 className="font-medium leading-none">Select Managers</h4>
+                <Separator />
+                <ScrollArea className="h-60">
+                  <div className="space-y-2">
+                    {uniqueManagers && uniqueManagers.length > 0 ? (
+                      uniqueManagers.map((manager, index) => {
+                        const managerName = manager.name || 'Unknown Manager';
+                        const managerId = manager.id || `manager-${index}`;
+                        
+                        return (
+                          <div key={managerId} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`manager-${managerId}`}
+                              checked={selectedManagers.includes(managerName)}
+                              onCheckedChange={() => handleManagerToggle(managerName)}
+                            />
+                            <label
+                              htmlFor={`manager-${managerId}`}
+                              className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                              {managerName}
+                            </label>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-sm text-muted-foreground p-2">No managers available</div>
+                    )}
+                  </div>
+                </ScrollArea>
+                <Separator />
+                <div className="flex justify-between">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onManagersChange([])}
+                  >
+                    Clear All
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onManagersChange(uniqueManagers.map(m => m.name))}
+                  >
+                    Select All
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+
         {/* Clear All Filters Button */}
         {totalFilters > 0 && (
           <Button variant="ghost" size="sm" onClick={clearAllFilters}>
@@ -226,6 +315,17 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
               {recruiter}
               <button
                 onClick={() => handleRecruiterToggle(recruiter)}
+                className="ml-1 hover:bg-muted rounded-full"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+          {selectedManagers.map((manager) => (
+            <Badge key={manager} variant="secondary" className="text-xs">
+              {manager}
+              <button
+                onClick={() => handleManagerToggle(manager)}
                 className="ml-1 hover:bg-muted rounded-full"
               >
                 <X className="h-3 w-3" />
