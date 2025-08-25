@@ -107,18 +107,7 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
     let aHasValue = true;
     let bHasValue = true;
 
-    if (sortField === 'interviewDateTime') {
-      // Handle null dates - they should always appear at the bottom
-      if (!a.interviewDate && !b.interviewDate) return 0;
-      if (!a.interviewDate) return 1; // Always put null dates at bottom
-      if (!b.interviewDate) return -1; // Always put valid dates at top
-      
-      // Sort by date and time combined
-      const aDateTime = new Date(`${a.interviewDate.toDateString()} ${a.interviewTime || '00:00'}`);
-      const bDateTime = new Date(`${b.interviewDate.toDateString()} ${b.interviewTime || '00:00'}`);
-      aValue = aDateTime.getTime();
-      bValue = bDateTime.getTime();
-    } else if (sortField === 'status1') {
+    if (sortField === 'status1') {
       // Use custom status order for Status 1
       aValue = getStatusOrder(a.status1, true);
       bValue = getStatusOrder(b.status1, true);
@@ -135,17 +124,18 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
       bHasValue = bValue !== null && bValue !== undefined && bValue !== '';
     }
     
-    // Handle null/undefined values for non-date fields
-    if (sortField !== 'interviewDateTime') {
-      if (!aHasValue && !bHasValue) return 0;
-      if (!aHasValue) return 1; // Put empty values at bottom
-      if (!bHasValue) return -1; // Put valid values at top
-    }
+    // Handle null/undefined values
+    if (!aHasValue && !bHasValue) return 0;
+    if (!aHasValue) return 1; // Put empty values at bottom
+    if (!bHasValue) return -1; // Put valid values at top
     
     if (typeof aValue === 'string' && typeof bValue === 'string') {
+      // Normalize strings for proper alphabetical comparison
+      const normalizedA = aValue.toLowerCase().trim();
+      const normalizedB = bValue.toLowerCase().trim();
       return sortDirection === 'asc' 
-        ? aValue.localeCompare(bValue, undefined, { sensitivity: 'base' })
-        : bValue.localeCompare(aValue, undefined, { sensitivity: 'base' });
+        ? normalizedA.localeCompare(normalizedB, undefined, { sensitivity: 'accent', numeric: true })
+        : normalizedB.localeCompare(normalizedA, undefined, { sensitivity: 'accent', numeric: true });
     }
     
     if (typeof aValue === 'number' && typeof bValue === 'number') {
@@ -222,7 +212,7 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
             </div>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-32">
+        <DropdownMenuContent align="start" className="w-32 bg-background border shadow-md z-50">
           <DropdownMenuItem onClick={() => handleSort(field, 'asc')}>
             Sort A→Z
           </DropdownMenuItem>
@@ -252,9 +242,7 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>
-              <SortButton field="interviewDateTime">Interview Date & Time</SortButton>
-            </TableHead>
+            <TableHead>Interview Date & Time</TableHead>
             <TableHead>Round</TableHead>
             <TableHead>
               <SortButton field="name">Candidate</SortButton>
