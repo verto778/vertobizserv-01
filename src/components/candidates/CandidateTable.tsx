@@ -1,9 +1,15 @@
 
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Pencil, Trash2, ChevronDown, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,17 +75,13 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
     return match ? match.name : id;
   };
 
-  const handleSort = (field: keyof Candidate | 'interviewDateTime') => {
-    if (sortField === field) {
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else if (sortDirection === 'desc') {
-        setSortField(null);
-        setSortDirection(null);
-      }
+  const handleSort = (field: keyof Candidate | 'interviewDateTime', direction: 'asc' | 'desc' | 'clear') => {
+    if (direction === 'clear') {
+      setSortField(null);
+      setSortDirection(null);
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection(direction);
     }
   };
 
@@ -102,11 +104,18 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
 
     let aValue: any;
     let bValue: any;
+    let aHasValue = true;
+    let bHasValue = true;
 
     if (sortField === 'interviewDateTime') {
+      // Handle null dates - they should always appear at the bottom
+      if (!a.interviewDate && !b.interviewDate) return 0;
+      if (!a.interviewDate) return 1; // Always put null dates at bottom
+      if (!b.interviewDate) return -1; // Always put valid dates at top
+      
       // Sort by date and time combined
-      const aDateTime = a.interviewDate ? new Date(`${a.interviewDate.toDateString()} ${a.interviewTime || '00:00'}`) : new Date(0);
-      const bDateTime = b.interviewDate ? new Date(`${b.interviewDate.toDateString()} ${b.interviewTime || '00:00'}`) : new Date(0);
+      const aDateTime = new Date(`${a.interviewDate.toDateString()} ${a.interviewTime || '00:00'}`);
+      const bDateTime = new Date(`${b.interviewDate.toDateString()} ${b.interviewTime || '00:00'}`);
       aValue = aDateTime.getTime();
       bValue = bDateTime.getTime();
     } else if (sortField === 'status1') {
@@ -120,22 +129,28 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
     } else {
       aValue = a[sortField];
       bValue = b[sortField];
+      
+      // Check for null/undefined values
+      aHasValue = aValue !== null && aValue !== undefined && aValue !== '';
+      bHasValue = bValue !== null && bValue !== undefined && bValue !== '';
+    }
+    
+    // Handle null/undefined values for non-date fields
+    if (sortField !== 'interviewDateTime') {
+      if (!aHasValue && !bHasValue) return 0;
+      if (!aHasValue) return 1; // Put empty values at bottom
+      if (!bHasValue) return -1; // Put valid values at top
     }
     
     if (typeof aValue === 'string' && typeof bValue === 'string') {
       return sortDirection === 'asc' 
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
+        ? aValue.localeCompare(bValue, undefined, { sensitivity: 'base' })
+        : bValue.localeCompare(aValue, undefined, { sensitivity: 'base' });
     }
     
     if (typeof aValue === 'number' && typeof bValue === 'number') {
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     }
-    
-    // Handle null/undefined values
-    if (!aValue && !bValue) return 0;
-    if (!aValue) return sortDirection === 'asc' ? 1 : -1;
-    if (!bValue) return sortDirection === 'asc' ? -1 : 1;
     
     return 0;
   });
@@ -180,24 +195,49 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
     setCandidateToDelete(null);
   };
 
-  const SortButton: React.FC<{ field: keyof Candidate | 'interviewDateTime'; children: React.ReactNode }> = ({ field, children }) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-auto p-0 font-medium hover:bg-transparent"
-      onClick={() => handleSort(field)}
-    >
-      {children}
-      {sortField === field && sortDirection ? (
-        sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
-      ) : (
-        <div className="ml-1 h-4 w-4 flex flex-col justify-center">
-          <ChevronUp className="h-2 w-4 opacity-30" />
-          <ChevronDown className="h-2 w-4 opacity-30" />
-        </div>
-      )}
-    </Button>
-  );
+  const SortButton: React.FC<{ field: keyof Candidate | 'interviewDateTime'; children: React.ReactNode }> = ({ field, children }) => {
+    const getSortLabel = () => {
+      if (sortField === field && sortDirection) {
+        return sortDirection === 'asc' ? 'A→Z' : 'Z→A';
+      }
+      return '';
+    };
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-auto p-1 font-medium hover:bg-accent/50 flex items-center gap-1"
+          >
+            {children}
+            <div className="flex items-center gap-1">
+              {getSortLabel() && (
+                <span className="text-xs px-1 py-0.5 bg-primary/10 text-primary rounded">
+                  {getSortLabel()}
+                </span>
+              )}
+              <ArrowUpDown className="h-3 w-3 opacity-50" />
+            </div>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-32">
+          <DropdownMenuItem onClick={() => handleSort(field, 'asc')}>
+            Sort A→Z
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleSort(field, 'desc')}>
+            Sort Z→A
+          </DropdownMenuItem>
+          {sortField === field && (
+            <DropdownMenuItem onClick={() => handleSort(field, 'clear')}>
+              Clear Sort
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   if (candidates.length === 0) {
     return (
