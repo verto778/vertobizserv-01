@@ -61,8 +61,8 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
   const { isSuperAdmin } = useSuperAdmin();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [candidateToDelete, setCandidateToDelete] = useState<Candidate | null>(null);
-  const [sortField, setSortField] = useState<keyof Candidate | 'interviewDateTime'>('interviewDateTime');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<keyof Candidate | 'interviewDateTime' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
 
   const getPositionNameById = (id: string) => {
     const match = positions.find(pos => pos.id === id);
@@ -71,14 +71,35 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
 
   const handleSort = (field: keyof Candidate | 'interviewDateTime') => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortField(null);
+        setSortDirection(null);
+      }
     } else {
       setSortField(field);
       setSortDirection('asc');
     }
   };
 
+  // Custom sorting order for statuses
+  const getStatusOrder = (status: string, isStatus1: boolean = true) => {
+    if (isStatus1) {
+      const status1Order = ['Attended', 'Confirmed', 'Yet to Confirm', 'Client Conf Pending', 'Reschedule', 'Position Hold', 'Not Attended', 'Not Interested'];
+      const index = status1Order.indexOf(status);
+      return index !== -1 ? index : 999;
+    } else {
+      const status2Order = ['Selected', 'Shortlisted', 'Documentation', 'Feedback Awaited', 'Hold', 'Interview Reject', 'Final Reject', 'Drop'];
+      const index = status2Order.indexOf(status);
+      return index !== -1 ? index : 999;
+    }
+  };
+
   const sortedCandidates = [...candidates].sort((a, b) => {
+    // If no sorting is applied, return original order
+    if (!sortField || !sortDirection) return 0;
+
     let aValue: any;
     let bValue: any;
 
@@ -88,6 +109,14 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
       const bDateTime = b.interviewDate ? new Date(`${b.interviewDate.toDateString()} ${b.interviewTime || '00:00'}`) : new Date(0);
       aValue = aDateTime.getTime();
       bValue = bDateTime.getTime();
+    } else if (sortField === 'status1') {
+      // Use custom status order for Status 1
+      aValue = getStatusOrder(a.status1, true);
+      bValue = getStatusOrder(b.status1, true);
+    } else if (sortField === 'status2') {
+      // Use custom status order for Status 2
+      aValue = getStatusOrder(a.status2, false);
+      bValue = getStatusOrder(b.status2, false);
     } else {
       aValue = a[sortField];
       bValue = b[sortField];
@@ -159,8 +188,13 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
       onClick={() => handleSort(field)}
     >
       {children}
-      {sortField === field && (
+      {sortField === field && sortDirection ? (
         sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
+      ) : (
+        <div className="ml-1 h-4 w-4 flex flex-col justify-center">
+          <ChevronUp className="h-2 w-4 opacity-30" />
+          <ChevronDown className="h-2 w-4 opacity-30" />
+        </div>
       )}
     </Button>
   );
@@ -182,7 +216,9 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
               <SortButton field="interviewDateTime">Interview Date & Time</SortButton>
             </TableHead>
             <TableHead>Round</TableHead>
-            <TableHead>Candidate</TableHead>
+            <TableHead>
+              <SortButton field="name">Candidate</SortButton>
+            </TableHead>
             <TableHead>Mobile</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Mode</TableHead>
