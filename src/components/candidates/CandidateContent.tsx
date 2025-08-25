@@ -37,6 +37,10 @@ const CandidateContent: React.FC<CandidateContentProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   
+  // Table-level sorting state (independent of header sorting)
+  const [tableSortField, setTableSortField] = useState<keyof Candidate | null>(null);
+  const [tableSortDirection, setTableSortDirection] = useState<'asc' | 'desc' | null>(null);
+  
   const {
     filters,
     filteredCandidates,
@@ -47,15 +51,88 @@ const CandidateContent: React.FC<CandidateContentProps> = ({
     toggleFilterPanel
   } = useCandidateFilters(candidates);
 
-  // Apply sorting based on sortOrder prop from header
-  const sortedCandidates = useMemo(() => {
-    if (sortOrder === 'asc') {
-      return [...filteredCandidates].sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortOrder === 'desc') {
-      return [...filteredCandidates].sort((a, b) => b.name.localeCompare(a.name));
+  // Custom sorting order for statuses
+  const getStatusOrder = (status: string, isStatus1: boolean = true) => {
+    if (isStatus1) {
+      const status1Order = ['Attended', 'Confirmed', 'Yet to Confirm', 'Client Conf Pending', 'Reschedule', 'Position Hold', 'Not Attended', 'Not Interested'];
+      const index = status1Order.indexOf(status);
+      return index !== -1 ? index : 999;
+    } else {
+      const status2Order = ['Selected', 'Shortlisted', 'Documentation', 'Feedback Awaited', 'Hold', 'Interview Reject', 'Final Reject', 'Drop'];
+      const index = status2Order.indexOf(status);
+      return index !== -1 ? index : 999;
     }
-    return filteredCandidates;
-  }, [filteredCandidates, sortOrder]);
+  };
+
+  // Handle table column sorting
+  const handleTableSort = (field: keyof Candidate, direction: 'asc' | 'desc' | 'clear') => {
+    if (direction === 'clear') {
+      setTableSortField(null);
+      setTableSortDirection(null);
+    } else {
+      setTableSortField(field);
+      setTableSortDirection(direction);
+    }
+    setCurrentPage(1); // Reset to first page when sorting changes
+  };
+
+  // Apply sorting based on sortOrder prop from header AND table column sorting
+  const sortedCandidates = useMemo(() => {
+    let candidates = [...filteredCandidates];
+    
+    // Apply table column sorting first (higher priority)
+    if (tableSortField && tableSortDirection) {
+      candidates = candidates.sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
+        let aHasValue = true;
+        let bHasValue = true;
+
+        if (tableSortField === 'status1') {
+          aValue = getStatusOrder(a.status1, true);
+          bValue = getStatusOrder(b.status1, true);
+        } else if (tableSortField === 'status2') {
+          aValue = getStatusOrder(a.status2, false);
+          bValue = getStatusOrder(b.status2, false);
+        } else {
+          aValue = a[tableSortField];
+          bValue = b[tableSortField];
+          
+          // Check for null/undefined values
+          aHasValue = aValue !== null && aValue !== undefined && aValue !== '';
+          bHasValue = bValue !== null && bValue !== undefined && bValue !== '';
+        }
+        
+        // Handle null/undefined values
+        if (!aHasValue && !bHasValue) return 0;
+        if (!aHasValue) return 1; // Put empty values at bottom
+        if (!bHasValue) return -1; // Put valid values at top
+        
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          // Normalize strings for proper alphabetical comparison
+          const normalizedA = aValue.toLowerCase().trim();
+          const normalizedB = bValue.toLowerCase().trim();
+          return tableSortDirection === 'asc' 
+            ? normalizedA.localeCompare(normalizedB, undefined, { sensitivity: 'accent', numeric: true })
+            : normalizedB.localeCompare(normalizedA, undefined, { sensitivity: 'accent', numeric: true });
+        }
+        
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return tableSortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+        
+        return 0;
+      });
+    }
+    // Apply header name sorting only if no table column sorting is active
+    else if (sortOrder === 'asc') {
+      candidates = candidates.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortOrder === 'desc') {
+      candidates = candidates.sort((a, b) => b.name.localeCompare(a.name));
+    }
+    
+    return candidates;
+  }, [filteredCandidates, sortOrder, tableSortField, tableSortDirection]);
 
   // Apply pagination to the sorted results 
   const totalPages = Math.ceil(sortedCandidates.length / itemsPerPage);
@@ -189,7 +266,12 @@ const CandidateContent: React.FC<CandidateContentProps> = ({
           <div className="flex justify-between items-center px-6 py-3 border-b bg-muted/20">
             <div className="text-sm text-muted-foreground">
               Showing {startIndex + 1}-{Math.min(endIndex, sortedCandidates.length)} of {sortedCandidates.length} candidates
-              {sortOrder !== 'none' && (
+              {tableSortField && tableSortDirection && (
+                <span className="ml-2 text-blue-600">
+                  (sorted by {tableSortField} {tableSortDirection === 'asc' ? 'A-Z' : 'Z-A'})
+                </span>
+              )}
+              {!tableSortField && sortOrder !== 'none' && (
                 <span className="ml-2 text-blue-600">
                   (sorted by name {sortOrder === 'asc' ? 'A-Z' : 'Z-A'})
                 </span>
@@ -218,6 +300,9 @@ const CandidateContent: React.FC<CandidateContentProps> = ({
             onEdit={onEdit} 
             onDelete={onDelete}
             positions={allPositions}
+            onSort={handleTableSort}
+            sortField={tableSortField}
+            sortDirection={tableSortDirection}
           />
           
           {/* Pagination */}

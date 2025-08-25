@@ -61,89 +61,32 @@ interface CandidateTableProps {
   onEdit: (candidate: Candidate) => void;
   onDelete?: (candidateId: string) => void;
   positions: Position[];
+  onSort: (field: keyof Candidate, direction: 'asc' | 'desc' | 'clear') => void;
+  sortField: keyof Candidate | null;
+  sortDirection: 'asc' | 'desc' | null;
 }
 
-const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onDelete, positions }) => {
+const CandidateTable: React.FC<CandidateTableProps> = ({ 
+  candidates, 
+  onEdit, 
+  onDelete, 
+  positions, 
+  onSort, 
+  sortField, 
+  sortDirection 
+}) => {
   const { isSuperAdmin } = useSuperAdmin();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [candidateToDelete, setCandidateToDelete] = useState<Candidate | null>(null);
-  const [sortField, setSortField] = useState<keyof Candidate | 'interviewDateTime' | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
 
   const getPositionNameById = (id: string) => {
     const match = positions.find(pos => pos.id === id);
     return match ? match.name : id;
   };
 
-  const handleSort = (field: keyof Candidate | 'interviewDateTime', direction: 'asc' | 'desc' | 'clear') => {
-    if (direction === 'clear') {
-      setSortField(null);
-      setSortDirection(null);
-    } else {
-      setSortField(field);
-      setSortDirection(direction);
-    }
+  const handleSort = (field: keyof Candidate, direction: 'asc' | 'desc' | 'clear') => {
+    onSort(field, direction);
   };
-
-  // Custom sorting order for statuses
-  const getStatusOrder = (status: string, isStatus1: boolean = true) => {
-    if (isStatus1) {
-      const status1Order = ['Attended', 'Confirmed', 'Yet to Confirm', 'Client Conf Pending', 'Reschedule', 'Position Hold', 'Not Attended', 'Not Interested'];
-      const index = status1Order.indexOf(status);
-      return index !== -1 ? index : 999;
-    } else {
-      const status2Order = ['Selected', 'Shortlisted', 'Documentation', 'Feedback Awaited', 'Hold', 'Interview Reject', 'Final Reject', 'Drop'];
-      const index = status2Order.indexOf(status);
-      return index !== -1 ? index : 999;
-    }
-  };
-
-  const sortedCandidates = [...candidates].sort((a, b) => {
-    // If no sorting is applied, return original order
-    if (!sortField || !sortDirection) return 0;
-
-    let aValue: any;
-    let bValue: any;
-    let aHasValue = true;
-    let bHasValue = true;
-
-    if (sortField === 'status1') {
-      // Use custom status order for Status 1
-      aValue = getStatusOrder(a.status1, true);
-      bValue = getStatusOrder(b.status1, true);
-    } else if (sortField === 'status2') {
-      // Use custom status order for Status 2
-      aValue = getStatusOrder(a.status2, false);
-      bValue = getStatusOrder(b.status2, false);
-    } else {
-      aValue = a[sortField];
-      bValue = b[sortField];
-      
-      // Check for null/undefined values
-      aHasValue = aValue !== null && aValue !== undefined && aValue !== '';
-      bHasValue = bValue !== null && bValue !== undefined && bValue !== '';
-    }
-    
-    // Handle null/undefined values
-    if (!aHasValue && !bHasValue) return 0;
-    if (!aHasValue) return 1; // Put empty values at bottom
-    if (!bHasValue) return -1; // Put valid values at top
-    
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      // Normalize strings for proper alphabetical comparison
-      const normalizedA = aValue.toLowerCase().trim();
-      const normalizedB = bValue.toLowerCase().trim();
-      return sortDirection === 'asc' 
-        ? normalizedA.localeCompare(normalizedB, undefined, { sensitivity: 'accent', numeric: true })
-        : normalizedB.localeCompare(normalizedA, undefined, { sensitivity: 'accent', numeric: true });
-    }
-    
-    if (typeof aValue === 'number' && typeof bValue === 'number') {
-      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-    }
-    
-    return 0;
-  });
 
   const handleDeleteClick = (candidate: Candidate) => {
     console.log('Delete clicked for candidate:', {
@@ -185,7 +128,7 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
     setCandidateToDelete(null);
   };
 
-  const SortButton: React.FC<{ field: keyof Candidate | 'interviewDateTime'; children: React.ReactNode }> = ({ field, children }) => {
+  const SortButton: React.FC<{ field: keyof Candidate; children: React.ReactNode }> = ({ field, children }) => {
     const getSortLabel = () => {
       if (sortField === field && sortDirection) {
         return sortDirection === 'asc' ? 'A→Z' : 'Z→A';
@@ -274,7 +217,7 @@ const CandidateTable: React.FC<CandidateTableProps> = ({ candidates, onEdit, onD
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedCandidates.map((candidate) => (
+          {candidates.map((candidate) => (
             <TableRow key={candidate.id}>
               <TableCell>
                 {candidate.interviewDate ? (
