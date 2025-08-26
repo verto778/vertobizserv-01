@@ -114,11 +114,12 @@ const CandidateContent: React.FC<CandidateContentProps> = ({
           bHasValue = bValue !== null && bValue !== undefined && bValue !== '';
         }
         
-        // Handle null/undefined values
+        // Handle null/undefined values - always put empty values at bottom
         if (!aHasValue && !bHasValue) return 0;
         if (!aHasValue) return 1; // Put empty values at bottom
         if (!bHasValue) return -1; // Put valid values at top
         
+        // For string fields (client, position, recruiter, manager, name, etc.)
         if (typeof aValue === 'string' && typeof bValue === 'string') {
           // Normalize strings for proper alphabetical comparison
           const normalizedA = aValue.toLowerCase().trim();
