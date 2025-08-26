@@ -88,13 +88,7 @@ const CandidateContent: React.FC<CandidateContentProps> = ({
         let aHasValue = true;
         let bHasValue = true;
 
-        if (tableSortField === 'status1') {
-          aValue = getStatusOrder(a.status1, true);
-          bValue = getStatusOrder(b.status1, true);
-        } else if (tableSortField === 'status2') {
-          aValue = getStatusOrder(a.status2, false);
-          bValue = getStatusOrder(b.status2, false);
-        } else if (tableSortField === 'interviewDate') {
+        if (tableSortField === 'interviewDate') {
           aValue = a.interviewDate;
           bValue = b.interviewDate;
           
