@@ -131,10 +131,28 @@ const CandidateTable: React.FC<CandidateTableProps> = ({
   const SortButton: React.FC<{ field: keyof Candidate; children: React.ReactNode }> = ({ field, children }) => {
     const getSortLabel = () => {
       if (sortField === field && sortDirection) {
+        if (field === 'interviewDate') {
+          return sortDirection === 'asc' ? 'L→H' : 'H→L';
+        }
         return sortDirection === 'asc' ? 'A→Z' : 'Z→A';
       }
       return '';
     };
+
+    const getDropdownLabels = () => {
+      if (field === 'interviewDate') {
+        return {
+          asc: 'Sort Low to High',
+          desc: 'Sort High to Low'
+        };
+      }
+      return {
+        asc: 'Sort A→Z',
+        desc: 'Sort Z→A'
+      };
+    };
+
+    const labels = getDropdownLabels();
 
     return (
       <DropdownMenu>
@@ -155,12 +173,12 @@ const CandidateTable: React.FC<CandidateTableProps> = ({
             </div>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-32 bg-background border shadow-md z-50">
+        <DropdownMenuContent align="start" className="w-40 bg-background border shadow-md z-50">
           <DropdownMenuItem onClick={() => handleSort(field, 'asc')}>
-            Sort A→Z
+            {labels.asc}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleSort(field, 'desc')}>
-            Sort Z→A
+            {labels.desc}
           </DropdownMenuItem>
           {sortField === field && (
             <DropdownMenuItem onClick={() => handleSort(field, 'clear')}>
@@ -185,7 +203,9 @@ const CandidateTable: React.FC<CandidateTableProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Interview Date & Time</TableHead>
+            <TableHead>
+              <SortButton field="interviewDate">Interview Date & Time</SortButton>
+            </TableHead>
             <TableHead>Round</TableHead>
             <TableHead>
               <SortButton field="name">Candidate</SortButton>

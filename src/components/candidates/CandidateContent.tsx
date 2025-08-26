@@ -94,6 +94,23 @@ const CandidateContent: React.FC<CandidateContentProps> = ({
         } else if (tableSortField === 'status2') {
           aValue = getStatusOrder(a.status2, false);
           bValue = getStatusOrder(b.status2, false);
+        } else if (tableSortField === 'interviewDate') {
+          aValue = a.interviewDate;
+          bValue = b.interviewDate;
+          
+          // Special handling for interview dates - null dates always at bottom
+          aHasValue = aValue !== null && aValue !== undefined;
+          bHasValue = bValue !== null && bValue !== undefined;
+          
+          if (!aHasValue && !bHasValue) return 0;
+          if (!aHasValue) return 1; // Null dates to bottom
+          if (!bHasValue) return -1; // Valid dates to top
+          
+          // Convert to timestamps for proper date comparison
+          const aTime = new Date(aValue).getTime();
+          const bTime = new Date(bValue).getTime();
+          
+          return tableSortDirection === 'asc' ? aTime - bTime : bTime - aTime;
         } else {
           aValue = a[tableSortField];
           bValue = b[tableSortField];
@@ -268,7 +285,11 @@ const CandidateContent: React.FC<CandidateContentProps> = ({
               Showing {startIndex + 1}-{Math.min(endIndex, sortedCandidates.length)} of {sortedCandidates.length} candidates
               {tableSortField && tableSortDirection && (
                 <span className="ml-2 text-blue-600">
-                  (sorted by {tableSortField} {tableSortDirection === 'asc' ? 'A-Z' : 'Z-A'})
+                  (sorted by {tableSortField} {
+                    tableSortField === 'interviewDate' 
+                      ? (tableSortDirection === 'asc' ? 'Low to High' : 'High to Low')
+                      : (tableSortDirection === 'asc' ? 'A-Z' : 'Z-A')
+                  })
                 </span>
               )}
               {!tableSortField && sortOrder !== 'none' && (
