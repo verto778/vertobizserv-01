@@ -131,7 +131,7 @@ const CandidateTable: React.FC<CandidateTableProps> = ({
   const SortButton: React.FC<{ field: keyof Candidate; children: React.ReactNode }> = ({ field, children }) => {
     const getSortLabel = () => {
       if (sortField === field && sortDirection) {
-        if (field === 'interviewDate') {
+        if (field === 'interviewDate' || field === 'dateInformed') {
           return sortDirection === 'asc' ? 'L→H' : 'H→L';
         }
         return sortDirection === 'asc' ? 'A→Z' : 'Z→A';
@@ -140,7 +140,7 @@ const CandidateTable: React.FC<CandidateTableProps> = ({
     };
 
     const getDropdownLabels = () => {
-      if (field === 'interviewDate') {
+      if (field === 'interviewDate' || field === 'dateInformed') {
         return {
           asc: 'Sort Low to High',
           desc: 'Sort High to Low'
@@ -231,7 +231,9 @@ const CandidateTable: React.FC<CandidateTableProps> = ({
             <TableHead>
               <SortButton field="manager">Manager</SortButton>
             </TableHead>
-            <TableHead>Info Date</TableHead>
+            <TableHead>
+              <SortButton field="dateInformed">Info Date</SortButton>
+            </TableHead>
             <TableHead>Remarks</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
