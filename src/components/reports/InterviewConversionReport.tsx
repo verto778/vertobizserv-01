@@ -69,6 +69,8 @@ const InterviewConversionReport: React.FC = () => {
 
   // Custom status checking functions based on user requirements
   const checkCandidateStatus = (candidate: Candidate, category: string): boolean => {
+    const round = parseInt(candidate.interviewRound || '1');
+    
     switch (category) {
       case 'Attended':
         // Show whose status1 is 'Attended' (ignore status2)
@@ -79,24 +81,24 @@ const InterviewConversionReport: React.FC = () => {
         return candidate.status2 === 'Interview Reject' || candidate.status2 === 'Final Reject';
         
       case 'SL -2nd Round+':
-        // Show candidates whose round is 2+ AND status2 is 'Selected'
-        const round = parseInt(candidate.interviewRound || '1');
+        // Show candidates whose round is 2+ AND status2 is 'Selected' (exclusive check)
         return round >= 2 && candidate.status2 === 'Selected';
         
       case 'Selected / Offered':
-        // Show whose status2 is either 'Selected' or 'Offered'
-        return candidate.status2 === 'Selected' || candidate.status2 === 'Offered';
+        // Show whose status2 is 'Selected' (but NOT in round 2+) or 'Offered'
+        // This ensures no overlap with 'SL -2nd Round+' category
+        return (candidate.status2 === 'Selected' && round < 2) || candidate.status2 === 'Offered';
         
       case 'Feedback Awaited':
         // Show whose status2 is 'Feedback Awaited' (ignore status1)
         return candidate.status2 === 'Feedback Awaited';
         
       case 'Others':
-        // Everything else not covered by above categories - avoid recursive calls
+        // Everything else not covered by above categories
         return candidate.status1 !== 'Attended' &&
                !(candidate.status2 === 'Interview Reject' || candidate.status2 === 'Final Reject') &&
-               !(parseInt(candidate.interviewRound || '1') >= 2 && candidate.status2 === 'Selected') &&
-               !(candidate.status2 === 'Selected' || candidate.status2 === 'Offered') &&
+               !(round >= 2 && candidate.status2 === 'Selected') &&
+               !((candidate.status2 === 'Selected' && round < 2) || candidate.status2 === 'Offered') &&
                candidate.status2 !== 'Feedback Awaited';
         
       default:
