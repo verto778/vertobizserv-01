@@ -9,11 +9,13 @@ import { Download } from 'lucide-react';
 interface AttendedCasesData {
   month: string;
   Attended: number;
-  Rejected: number;
-  'SL-2ndRound+': number;
-  'Selected/Offered': number;
-  'FeedbackAwaited': number;
-  Others: number;
+  'Client Conf Pending': number;
+  Confirmed: number;
+  'Not Attended': number;
+  'Not Interested': number;
+  'Position Hold': number;
+  Reschedule: number;
+  'Yet to Confirm': number;
 }
 
 interface AttendedCasesChartProps {
@@ -29,25 +31,33 @@ const chartConfig = {
     label: "Attended",
     color: "#10B981",
   },
-  Rejected: {
-    label: "Rejected", 
+  "Client Conf Pending": {
+    label: "Client Conf Pending", 
     color: "#EF4444",
   },
-  "SL-2ndRound+": {
-    label: "SL-2nd Round+",
+  Confirmed: {
+    label: "Confirmed",
     color: "#F59E0B",
   },
-  "Selected/Offered": {
-    label: "Selected/Offered",
+  "Not Attended": {
+    label: "Not Attended",
     color: "#8B5CF6",
   },
-  FeedbackAwaited: {
-    label: "Feedback Awaited",
+  "Not Interested": {
+    label: "Not Interested",
     color: "#06B6D4",
   },
-  Others: {
-    label: "Others",
+  "Position Hold": {
+    label: "Position Hold",
     color: "#6B7280",
+  },
+  Reschedule: {
+    label: "Reschedule",
+    color: "#FB7185",
+  },
+  "Yet to Confirm": {
+    label: "Yet to Confirm",
+    color: "#FBBF24",
   },
 };
 
@@ -109,34 +119,46 @@ const AttendedCasesChart: React.FC<AttendedCasesChartProps> = ({
                 name="Attended"
               />
               <Bar 
-                dataKey="Rejected" 
+                dataKey="Client Conf Pending" 
                 stackId="a"
                 fill="#EF4444"
-                name="Rejected"
+                name="Client Conf Pending"
               />
               <Bar 
-                dataKey="SL-2ndRound+" 
+                dataKey="Confirmed" 
                 stackId="a"
                 fill="#F59E0B"
-                name="SL-2nd Round+"
+                name="Confirmed"
               />
               <Bar 
-                dataKey="Selected/Offered" 
+                dataKey="Not Attended" 
                 stackId="a"
                 fill="#8B5CF6"
-                name="Selected/Offered"
+                name="Not Attended"
               />
               <Bar 
-                dataKey="FeedbackAwaited" 
+                dataKey="Not Interested" 
                 stackId="a"
                 fill="#06B6D4"
-                name="Feedback Awaited"
+                name="Not Interested"
               />
               <Bar 
-                dataKey="Others" 
+                dataKey="Position Hold" 
                 stackId="a"
                 fill="#6B7280"
-                name="Others"
+                name="Position Hold"
+              />
+              <Bar 
+                dataKey="Reschedule" 
+                stackId="a"
+                fill="#FB7185"
+                name="Reschedule"
+              />
+              <Bar 
+                dataKey="Yet to Confirm" 
+                stackId="a"
+                fill="#FBBF24"
+                name="Yet to Confirm"
               />
             </BarChart>
           </ResponsiveContainer>

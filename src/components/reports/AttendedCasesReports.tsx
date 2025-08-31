@@ -22,11 +22,13 @@ import { Candidate } from '@/components/candidates/types';
 interface AttendedCasesData {
   month: string;
   Attended: number;
-  Rejected: number;
-  'SL-2ndRound+': number;
-  'Selected/Offered': number;
-  'FeedbackAwaited': number;
-  Others: number;
+  'Client Conf Pending': number;
+  Confirmed: number;
+  'Not Attended': number;
+  'Not Interested': number;
+  'Position Hold': number;
+  Reschedule: number;
+  'Yet to Confirm': number;
 }
 
 interface AttendedCasesReportsProps {
@@ -60,37 +62,32 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
   const finalSelectedRecruiters = selectedRecruiters.length > 0 ? selectedRecruiters : localSelectedRecruiters;
   const finalSelectedManagers = selectedManagers.length > 0 ? selectedManagers : localSelectedManagers;
 
-  // Custom status checking function based on user requirements - matching InterviewConversionReport logic
+  // Custom status checking function for new 8 categories based on status1
   const checkCandidateStatus = (candidate: Candidate, category: string): boolean => {
     switch (category) {
       case 'Attended':
-        // Show whose status1 is 'Attended' (ignore status2)
         return candidate.status1 === 'Attended';
         
-      case 'Rejected':
-        // Show sum of Interview Reject and Final Reject from status2
-        return candidate.status2 === 'Interview Reject' || candidate.status2 === 'Final Reject';
+      case 'Client Conf Pending':
+        return candidate.status1 === 'Client Conf Pending';
         
-      case 'SL-2ndRound+':
-        // Show candidates whose round is 2+ AND status2 is 'Selected'
-        const round = parseInt(candidate.interviewRound || '1');
-        return round >= 2 && candidate.status2 === 'Selected';
+      case 'Confirmed':
+        return candidate.status1 === 'Confirmed';
         
-      case 'Selected/Offered':
-        // Show whose status2 is either 'Selected' or 'Offered'
-        return candidate.status2 === 'Selected' || candidate.status2 === 'Offered';
+      case 'Not Attended':
+        return candidate.status1 === 'Not Attended';
         
-      case 'FeedbackAwaited':
-        // Show whose status2 is 'Feedback Awaited' (ignore status1)
-        return candidate.status2 === 'Feedback Awaited';
+      case 'Not Interested':
+        return candidate.status1 === 'Not Interested';
         
-      case 'Others':
-        // Everything else not covered by above categories - avoid recursive calls
-        return candidate.status1 !== 'Attended' &&
-               !(candidate.status2 === 'Interview Reject' || candidate.status2 === 'Final Reject') &&
-               !(parseInt(candidate.interviewRound || '1') >= 2 && candidate.status2 === 'Selected') &&
-               !(candidate.status2 === 'Selected' || candidate.status2 === 'Offered') &&
-               candidate.status2 !== 'Feedback Awaited';
+      case 'Position Hold':
+        return candidate.status1 === 'Position Hold';
+        
+      case 'Reschedule':
+        return candidate.status1 === 'Reschedule';
+        
+      case 'Yet to Confirm':
+        return candidate.status1 === 'Yet to Confirm';
         
       default:
         return false;
@@ -184,18 +181,20 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
       // Count by status categories
       const statusCounts = {
         Attended: 0,
-        Rejected: 0,
-        'SL-2ndRound+': 0,
-        'Selected/Offered': 0,
-        'FeedbackAwaited': 0,
-        Others: 0
+        'Client Conf Pending': 0,
+        Confirmed: 0,
+        'Not Attended': 0,
+        'Not Interested': 0,
+        'Position Hold': 0,
+        Reschedule: 0,
+        'Yet to Confirm': 0
       };
 
       monthCandidates.forEach(candidate => {
-        console.log(`Candidate ${candidate.name} has status1: ${candidate.status1}, status2: ${candidate.status2}`);
+        console.log(`Candidate ${candidate.name} has status1: ${candidate.status1}`);
         
-        // Check each category using the new logic - prioritize status2 checks over status1
-        const categories = ['Rejected', 'FeedbackAwaited', 'SL-2ndRound+', 'Selected/Offered', 'Attended'];
+        // Check each category using status1
+        const categories = ['Attended', 'Client Conf Pending', 'Confirmed', 'Not Attended', 'Not Interested', 'Position Hold', 'Reschedule', 'Yet to Confirm'];
         let categorized = false;
         
         for (const category of categories) {
@@ -207,10 +206,9 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
           }
         }
         
-        // If not categorized in any specific category, put in Others
+        // Log if not categorized (this should rarely happen now)
         if (!categorized) {
-          statusCounts.Others++;
-          console.log(`Put in Others category`);
+          console.log(`Status1 '${candidate.status1}' not recognized for candidate ${candidate.name}`);
         }
       });
 
@@ -232,29 +230,34 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
   // Calculate percentage data for Report2b
   const attendedCasesPercentageData = useMemo((): AttendedCasesData[] => {
     return attendedCasesData.map(monthData => {
-      const total = monthData.Attended + monthData.Rejected + monthData['SL-2ndRound+'] + 
-                   monthData['Selected/Offered'] + monthData['FeedbackAwaited'] + monthData.Others;
+      const total = monthData.Attended + monthData['Client Conf Pending'] + monthData.Confirmed + 
+                   monthData['Not Attended'] + monthData['Not Interested'] + monthData['Position Hold'] +
+                   monthData.Reschedule + monthData['Yet to Confirm'];
       
       if (total === 0) {
         return {
           ...monthData,
           Attended: 0,
-          Rejected: 0,
-          'SL-2ndRound+': 0,
-          'Selected/Offered': 0,
-          'FeedbackAwaited': 0,
-          Others: 0
+          'Client Conf Pending': 0,
+          Confirmed: 0,
+          'Not Attended': 0,
+          'Not Interested': 0,
+          'Position Hold': 0,
+          Reschedule: 0,
+          'Yet to Confirm': 0
         };
       }
       
       return {
         month: monthData.month,
         Attended: Math.round((monthData.Attended / total) * 100),
-        Rejected: Math.round((monthData.Rejected / total) * 100),
-        'SL-2ndRound+': Math.round((monthData['SL-2ndRound+'] / total) * 100),
-        'Selected/Offered': Math.round((monthData['Selected/Offered'] / total) * 100),
-        'FeedbackAwaited': Math.round((monthData['FeedbackAwaited'] / total) * 100),
-        Others: Math.round((monthData.Others / total) * 100)
+        'Client Conf Pending': Math.round((monthData['Client Conf Pending'] / total) * 100),
+        Confirmed: Math.round((monthData.Confirmed / total) * 100),
+        'Not Attended': Math.round((monthData['Not Attended'] / total) * 100),
+        'Not Interested': Math.round((monthData['Not Interested'] / total) * 100),
+        'Position Hold': Math.round((monthData['Position Hold'] / total) * 100),
+        Reschedule: Math.round((monthData.Reschedule / total) * 100),
+        'Yet to Confirm': Math.round((monthData['Yet to Confirm'] / total) * 100)
       };
     });
   }, [attendedCasesData]);
@@ -275,11 +278,13 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
     const exportData = dataToExport.map(item => ({
       'Month': item.month,
       'Attended': isPercentage ? `${item.Attended}%` : item.Attended,
-      'Rejected': isPercentage ? `${item.Rejected}%` : item.Rejected,
-      'SL-2nd Round+': isPercentage ? `${item['SL-2ndRound+']}%` : item['SL-2ndRound+'],
-      'Selected/Offered': isPercentage ? `${item['Selected/Offered']}%` : item['Selected/Offered'],
-      'Feedback Awaited': isPercentage ? `${item['FeedbackAwaited']}%` : item['FeedbackAwaited'],
-      'Others': isPercentage ? `${item.Others}%` : item.Others
+      'Client Conf Pending': isPercentage ? `${item['Client Conf Pending']}%` : item['Client Conf Pending'],
+      'Confirmed': isPercentage ? `${item.Confirmed}%` : item.Confirmed,
+      'Not Attended': isPercentage ? `${item['Not Attended']}%` : item['Not Attended'],
+      'Not Interested': isPercentage ? `${item['Not Interested']}%` : item['Not Interested'],
+      'Position Hold': isPercentage ? `${item['Position Hold']}%` : item['Position Hold'],
+      'Reschedule': isPercentage ? `${item.Reschedule}%` : item.Reschedule,
+      'Yet to Confirm': isPercentage ? `${item['Yet to Confirm']}%` : item['Yet to Confirm']
     }));
 
     const fileName = `attended-cases-${isPercentage ? 'percentage' : 'count'}-report-${format(new Date(), 'yyyy-MM-dd')}`;
@@ -388,7 +393,7 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
             data={attendedCasesData}
             isPercentage={false}
             onExportExcel={() => handleExportExcel(false)}
-            title="Report2a: Attended Cases - Counts"
+            title="Interview Cases - Counts"
             description="Monthly breakdown of interview outcomes (absolute numbers)"
           />
         </TabsContent>
