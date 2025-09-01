@@ -227,16 +227,20 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
     return monthlyData;
   }, [candidates, finalSelectedClients, finalSelectedRecruiters, finalSelectedManagers, timeRange, customDateRange, dateRange]);
 
-  // Calculate percentage data for Report2b
+  // Calculate percentage data for Report2b - fixed logic
   const attendedCasesPercentageData = useMemo((): AttendedCasesData[] => {
     return attendedCasesData.map(monthData => {
-      const total = monthData.Attended + monthData['Client Conf Pending'] + monthData.Confirmed + 
-                   monthData['Not Attended'] + monthData['Not Interested'] + monthData['Position Hold'] +
-                   monthData.Reschedule + monthData['Yet to Confirm'];
+      // Calculate total for the month (excluding the month name)
+      const total = Object.keys(monthData)
+        .filter(key => key !== 'month')
+        .reduce((sum, key) => sum + (monthData[key as keyof AttendedCasesData] as number), 0);
+      
+      console.log(`Month ${monthData.month} total:`, total);
       
       if (total === 0) {
+        // If no data for this month, return zeros
         return {
-          ...monthData,
+          month: monthData.month,
           Attended: 0,
           'Client Conf Pending': 0,
           Confirmed: 0,
@@ -248,7 +252,8 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
         };
       }
       
-      return {
+      // Calculate percentages for each category
+      const percentageData = {
         month: monthData.month,
         Attended: Math.round((monthData.Attended / total) * 100),
         'Client Conf Pending': Math.round((monthData['Client Conf Pending'] / total) * 100),
@@ -259,6 +264,9 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
         Reschedule: Math.round((monthData.Reschedule / total) * 100),
         'Yet to Confirm': Math.round((monthData['Yet to Confirm'] / total) * 100)
       };
+      
+      console.log(`Month ${monthData.month} percentages:`, percentageData);
+      return percentageData;
     });
   }, [attendedCasesData]);
 
@@ -403,7 +411,7 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
             data={attendedCasesPercentageData}
             isPercentage={true}
             onExportExcel={() => handleExportExcel(true)}
-            title="Report2b: Attended Cases - Percentages"
+            title="Interview Count Percentage"
             description="Monthly breakdown of interview outcomes (percentage distribution)"
           />
         </TabsContent>
