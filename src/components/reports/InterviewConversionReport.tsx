@@ -396,11 +396,11 @@ const InterviewConversionReport: React.FC = () => {
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="attended-cases" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
-            Attended Cases
+            Interview Cases
           </TabsTrigger>
           <TabsTrigger value="charts" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
-            Overview Chart
+            Attended Cases
           </TabsTrigger>
           <TabsTrigger value="monthly-charts" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
