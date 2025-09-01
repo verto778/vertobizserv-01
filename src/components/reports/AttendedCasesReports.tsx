@@ -149,8 +149,8 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
     });
 
     console.log('After client/recruiter filter:', filteredCandidates.length);
-
-    console.log('After client/recruiter filter, before date filtering:', filteredCandidates.length);
+    console.log('Candidates with missing dateInformed:', filteredCandidates.filter(c => !c.dateInformed).length);
+    console.log('Sample candidates with dates:', filteredCandidates.slice(0, 5).map(c => ({ name: c.name, dateInformed: c.dateInformed, status1: c.status1 })));
 
     // Process data by month
     const monthlyData = months.map(monthInfo => {
