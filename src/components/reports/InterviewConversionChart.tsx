@@ -1,108 +1,76 @@
 
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 
-interface ChartDataItem {
-  name: string;
-  value: number;
-  percentage: string;
-  color: string;
+interface StatusOverviewData {
+  month: string;
+  Documentation: number;
+  Drop: number;
+  'Feedback Awaited': number;
+  'Final Reject': number;
+  Hold: number;
+  'Interview Reject': number;
+  Joined: number;
+  Offered: number;
+  'Offered Drop': number;
+  Selected: number;
+  Shortlisted: number;
+  'SL-2+': number;
 }
 
 interface InterviewConversionChartProps {
-  data: {
-    year: number;
-    month: string;
-    totalInterviews: number;
-    statusCounts: { [key: string]: number };
-  }[];
-  isPercentage?: boolean;
+  data: StatusOverviewData[];
+  onExportExcel: () => void;
 }
 
 const InterviewConversionChart: React.FC<InterviewConversionChartProps> = ({ 
-  data, 
-  isPercentage = false 
+  data,
+  onExportExcel
 }) => {
   // Define colors for each status category
   const statusColors = {
-    'Attended': '#10B981', // Green
-    'Rejected': '#EF4444', // Red
-    'SL -2nd Round+': '#F59E0B', // Amber
-    'Selected / Offered': '#8B5CF6', // Purple
-    'Feedback Awaited': '#3B82F6', // Blue
-    'Others': '#6B7280' // Gray
+    'Documentation': '#10B981', // Green
+    'Drop': '#EF4444', // Red
+    'Feedback Awaited': '#F59E0B', // Amber
+    'Final Reject': '#8B5CF6', // Purple
+    'Hold': '#3B82F6', // Blue
+    'Interview Reject': '#6B7280', // Gray
+    'Joined': '#EC4899', // Pink
+    'Offered': '#84CC16', // Lime
+    'Offered Drop': '#F97316', // Orange
+    'Selected': '#06B6D4', // Cyan
+    'Shortlisted': '#8B5CF6', // Violet
+    'SL-2+': '#FBBF24', // Yellow
   };
 
-  // Aggregate data across all months for the chart
-  const aggregatedData = React.useMemo(() => {
-    const totals: { [key: string]: number } = {};
-    let grandTotal = 0;
-
-    // Sum up all status counts across months
-    data.forEach(monthData => {
-      Object.keys(monthData.statusCounts).forEach(status => {
-        totals[status] = (totals[status] || 0) + monthData.statusCounts[status];
-        grandTotal += monthData.statusCounts[status];
-      });
-    });
-
-    // Convert to chart data format
-    return Object.keys(totals)
-      .filter(status => totals[status] > 0) // Only include non-zero values
-      .map(status => ({
-        name: status,
-        value: totals[status],
-        percentage: grandTotal > 0 ? ((totals[status] / grandTotal) * 100).toFixed(1) : '0.0',
-        color: statusColors[status as keyof typeof statusColors] || '#6B7280'
-      }));
-  }, [data]);
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium">{data.name}</p>
-          <p className="text-sm text-gray-600">
-            Count: {data.value}
-          </p>
-          <p className="text-sm text-gray-600">
-            Percentage: {data.percentage}%
-          </p>
-        </div>
-      );
-    }
-    return null;
+  const chartConfig = {
+    Documentation: { label: "Documentation", color: statusColors.Documentation },
+    Drop: { label: "Drop", color: statusColors.Drop },
+    "Feedback Awaited": { label: "Feedback Awaited", color: statusColors["Feedback Awaited"] },
+    "Final Reject": { label: "Final Reject", color: statusColors["Final Reject"] },
+    Hold: { label: "Hold", color: statusColors.Hold },
+    "Interview Reject": { label: "Interview Reject", color: statusColors["Interview Reject"] },
+    Joined: { label: "Joined", color: statusColors.Joined },
+    Offered: { label: "Offered", color: statusColors.Offered },
+    "Offered Drop": { label: "Offered Drop", color: statusColors["Offered Drop"] },
+    Selected: { label: "Selected", color: statusColors.Selected },
+    Shortlisted: { label: "Shortlisted", color: statusColors.Shortlisted },
+    "SL-2+": { label: "SL-2+", color: statusColors["SL-2+"] },
   };
 
-  const CustomLegend = (props: any) => {
-    const { payload } = props;
-    return (
-      <div className="flex flex-wrap justify-center gap-4 mt-4">
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center gap-2">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-sm text-gray-700">{entry.value}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  if (aggregatedData.length === 0) {
+  if (data.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Interview Status Distribution</CardTitle>
+          <CardTitle>Attended Cases – Overview</CardTitle>
           <CardDescription>No data available for the selected period</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-64 text-gray-500">
-            No interview data to display
+            No status2 data to display
           </div>
         </CardContent>
       </Card>
@@ -112,49 +80,63 @@ const InterviewConversionChart: React.FC<InterviewConversionChartProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Interview Status Distribution</CardTitle>
-        <CardDescription>
-          Overall distribution of interview outcomes across selected time period
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Attended Cases – Overview</CardTitle>
+            <CardDescription>
+              Status2 distribution of candidates across selected time period
+            </CardDescription>
+          </div>
+          <Button onClick={onExportExcel} className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Download Excel
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="h-80">
+        <div className="h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={aggregatedData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={120}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {aggregatedData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-              <Legend content={<CustomLegend />} />
-            </PieChart>
+            <BarChart
+              data={data}
+              margin={{
+                top: 20,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="month" 
+                tick={{ fontSize: 12 }}
+                angle={-45}
+                textAnchor="end"
+                height={80}
+              />
+              <YAxis 
+                tick={{ fontSize: 12 }}
+                label={{ 
+                  value: 'Count', 
+                  angle: -90, 
+                  position: 'insideLeft' 
+                }}
+              />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="Documentation" stackId="a" fill={statusColors.Documentation} name="Documentation" />
+              <Bar dataKey="Drop" stackId="a" fill={statusColors.Drop} name="Drop" />
+              <Bar dataKey="Feedback Awaited" stackId="a" fill={statusColors["Feedback Awaited"]} name="Feedback Awaited" />
+              <Bar dataKey="Final Reject" stackId="a" fill={statusColors["Final Reject"]} name="Final Reject" />
+              <Bar dataKey="Hold" stackId="a" fill={statusColors.Hold} name="Hold" />
+              <Bar dataKey="Interview Reject" stackId="a" fill={statusColors["Interview Reject"]} name="Interview Reject" />
+              <Bar dataKey="Joined" stackId="a" fill={statusColors.Joined} name="Joined" />
+              <Bar dataKey="Offered" stackId="a" fill={statusColors.Offered} name="Offered" />
+              <Bar dataKey="Offered Drop" stackId="a" fill={statusColors["Offered Drop"]} name="Offered Drop" />
+              <Bar dataKey="Selected" stackId="a" fill={statusColors.Selected} name="Selected" />
+              <Bar dataKey="Shortlisted" stackId="a" fill={statusColors.Shortlisted} name="Shortlisted" />
+              <Bar dataKey="SL-2+" stackId="a" fill={statusColors["SL-2+"]} name="SL-2+" />
+            </BarChart>
           </ResponsiveContainer>
-        </div>
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-          {aggregatedData.map((item, index) => (
-            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-gray-700">{item.name}</span>
-              </div>
-              <div className="text-right">
-                <div className="font-medium">{item.value}</div>
-                <div className="text-gray-500">{item.percentage}%</div>
-              </div>
-            </div>
-          ))}
         </div>
       </CardContent>
     </Card>

@@ -188,6 +188,116 @@ const InterviewConversionReport: React.FC = () => {
     });
   }, [candidates, selectedClients, selectedRecruiters, selectedManagers, dateRange]);
 
+  // Process status2 data for overview chart
+  const status2OverviewData = useMemo(() => {
+    const currentDate = new Date();
+    let months = [];
+    
+    // Generate months array for last 6 months
+    for (let i = 0; i < 6; i++) {
+      const date = subMonths(currentDate, i);
+      months.unshift({
+        year: getYear(date),
+        month: getMonth(date) + 1,
+        monthName: format(date, 'MMM yyyy'),
+        startDate: startOfMonth(date),
+        endDate: endOfMonth(date)
+      });
+    }
+
+    // Filter candidates
+    let filteredCandidates = candidates.filter(candidate => {
+      if (selectedClients.length > 0 && !selectedClients.includes(candidate.clientName)) {
+        return false;
+      }
+      if (selectedRecruiters.length > 0 && !selectedRecruiters.includes(candidate.recruiterName)) {
+        return false;
+      }
+      if (selectedManagers.length > 0 && !selectedManagers.includes(candidate.manager || '')) {
+        return false;
+      }
+      return true;
+    });
+
+    // Apply date range filter if provided
+    if (dateRange?.from && dateRange?.to) {
+      filteredCandidates = filteredCandidates.filter(candidate => {
+        const candidateDate = candidate.dateInformed;
+        if (!candidateDate) return false;
+        const candidateDateObj = new Date(candidateDate);
+        return candidateDateObj >= dateRange.from! && candidateDateObj <= dateRange.to!;
+      });
+    }
+
+    return months.map(monthInfo => {
+      let monthCandidates;
+      
+      if (dateRange?.from && dateRange?.to) {
+        // If date range is provided, use all filtered candidates
+        monthCandidates = filteredCandidates;
+      } else {
+        // Otherwise, filter by month
+        monthCandidates = filteredCandidates.filter(candidate => {
+          const candidateDate = candidate.dateInformed;
+          if (!candidateDate) return false;
+          const candidateDateObj = new Date(candidateDate);
+          return candidateDateObj >= monthInfo.startDate && candidateDateObj <= monthInfo.endDate;
+        });
+      }
+
+      // Count by status2 categories
+      const statusCounts = {
+        Documentation: 0,
+        Drop: 0,
+        'Feedback Awaited': 0,
+        'Final Reject': 0,
+        Hold: 0,
+        'Interview Reject': 0,
+        Joined: 0,
+        Offered: 0,
+        'Offered Drop': 0,
+        Selected: 0,
+        Shortlisted: 0,
+        'SL-2+': 0
+      };
+
+      monthCandidates.forEach(candidate => {
+        const status2 = candidate.status2;
+        
+        if (status2 === 'Documentation') {
+          statusCounts.Documentation++;
+          statusCounts['SL-2+']++;
+        } else if (status2 === 'Shortlisted') {
+          statusCounts.Shortlisted++;
+          statusCounts['SL-2+']++;
+        } else if (status2 === 'Drop') {
+          statusCounts.Drop++;
+        } else if (status2 === 'Feedback Awaited') {
+          statusCounts['Feedback Awaited']++;
+        } else if (status2 === 'Final Reject') {
+          statusCounts['Final Reject']++;
+        } else if (status2 === 'Hold') {
+          statusCounts.Hold++;
+        } else if (status2 === 'Interview Reject') {
+          statusCounts['Interview Reject']++;
+        } else if (status2 === 'Joined') {
+          statusCounts.Joined++;
+        } else if (status2 === 'Offered') {
+          statusCounts.Offered++;
+        } else if (status2 === 'Offered Drop') {
+          statusCounts['Offered Drop']++;
+        } else if (status2 === 'Selected') {
+          statusCounts.Selected++;
+        }
+      });
+
+      return {
+        month: monthInfo.monthName,
+        ...statusCounts
+      };
+    });
+  }, [candidates, selectedClients, selectedRecruiters, selectedManagers, dateRange]);
+
   // Calculate percentage data
   const percentageData = useMemo((): PercentageDataItem[] => {
     return conversionData.map(monthData => {
@@ -249,6 +359,36 @@ const InterviewConversionReport: React.FC = () => {
     exportToExcel(exportData, fileName);
   };
 
+  const handleStatus2ExportExcel = () => {
+    if (status2OverviewData.length === 0) {
+      toast({
+        title: "No data to export",
+        description: "Please adjust your filters to include data.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const exportData = status2OverviewData.map(item => ({
+      'Month': item.month,
+      'Documentation': item.Documentation,
+      'Drop': item.Drop,
+      'Feedback Awaited': item['Feedback Awaited'],
+      'Final Reject': item['Final Reject'],
+      'Hold': item.Hold,
+      'Interview Reject': item['Interview Reject'],
+      'Joined': item.Joined,
+      'Offered': item.Offered,
+      'Offered Drop': item['Offered Drop'],
+      'Selected': item.Selected,
+      'Shortlisted': item.Shortlisted,
+      'SL-2+': item['SL-2+']
+    }));
+
+    const fileName = `status2-overview-report-${format(new Date(), 'yyyy-MM-dd')}`;
+    exportToExcel(exportData, fileName);
+  };
+
   return (
     <div className="space-y-6">
       {/* Main Content Tabs */}
@@ -287,7 +427,10 @@ const InterviewConversionReport: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="charts" className="space-y-6">
-          <InterviewConversionChart data={conversionData} />
+          <InterviewConversionChart 
+            data={status2OverviewData} 
+            onExportExcel={handleStatus2ExportExcel}
+          />
         </TabsContent>
 
         <TabsContent value="monthly-charts" className="space-y-6">
