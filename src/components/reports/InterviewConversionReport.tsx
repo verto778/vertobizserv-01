@@ -130,10 +130,10 @@ const InterviewConversionReport: React.FC = () => {
       return true;
     });
 
-    // Apply date filtering based on date range using dateInformed column
+    // Apply date filtering based on date range using interviewDate column
     if (dateRange?.from && dateRange?.to) {
       filteredCandidates = filteredCandidates.filter(candidate => {
-        const candidateDate = candidate.dateInformed;
+        const candidateDate = candidate.interviewDate;
         if (!candidateDate) return false;
         
         const candidateDateObj = new Date(candidateDate);
@@ -145,7 +145,7 @@ const InterviewConversionReport: React.FC = () => {
     const monthlyGroups: { [key: string]: Candidate[] } = {};
     
     filteredCandidates.forEach(candidate => {
-      const candidateDate = candidate.dateInformed;
+      const candidateDate = candidate.interviewDate;
       if (!candidateDate) return;
       
       const date = new Date(candidateDate);
@@ -222,7 +222,7 @@ const InterviewConversionReport: React.FC = () => {
     // Apply date range filter if provided
     if (dateRange?.from && dateRange?.to) {
       filteredCandidates = filteredCandidates.filter(candidate => {
-        const candidateDate = candidate.dateInformed;
+        const candidateDate = candidate.interviewDate;
         if (!candidateDate) return false;
         const candidateDateObj = new Date(candidateDate);
         return candidateDateObj >= dateRange.from! && candidateDateObj <= dateRange.to!;
@@ -238,7 +238,7 @@ const InterviewConversionReport: React.FC = () => {
       } else {
         // Otherwise, filter by month
         monthCandidates = filteredCandidates.filter(candidate => {
-          const candidateDate = candidate.dateInformed;
+          const candidateDate = candidate.interviewDate;
           if (!candidateDate) return false;
           const candidateDateObj = new Date(candidateDate);
           return candidateDateObj >= monthInfo.startDate && candidateDateObj <= monthInfo.endDate;
