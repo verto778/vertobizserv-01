@@ -230,50 +230,20 @@ const InterviewConversionReport: React.FC = () => {
         });
       }
 
-      // Count by status2 categories
+      // Count by status categories using the same logic as conversionData
       const statusCounts = {
-        Documentation: 0,
-        Drop: 0,
-        'Feedback Awaited': 0,
-        'Final Reject': 0,
-        Hold: 0,
-        'Interview Reject': 0,
-        Joined: 0,
-        Offered: 0,
-        'Offered Drop': 0,
-        Selected: 0,
-        Shortlisted: 0,
-        'SL-2+': 0
+        'Attended': 0,
+        'Rejected': 0,
+        'SL -2nd Round+': 0,
+        'Offered': 0
       };
 
       monthCandidates.forEach(candidate => {
-        const status2 = candidate.status2;
-        
-        if (status2 === 'Documentation') {
-          statusCounts.Documentation++;
-          statusCounts['SL-2+']++;
-        } else if (status2 === 'Shortlisted') {
-          statusCounts.Shortlisted++;
-          statusCounts['SL-2+']++;
-        } else if (status2 === 'Drop') {
-          statusCounts.Drop++;
-        } else if (status2 === 'Feedback Awaited') {
-          statusCounts['Feedback Awaited']++;
-        } else if (status2 === 'Final Reject') {
-          statusCounts['Final Reject']++;
-        } else if (status2 === 'Hold') {
-          statusCounts.Hold++;
-        } else if (status2 === 'Interview Reject') {
-          statusCounts['Interview Reject']++;
-        } else if (status2 === 'Joined') {
-          statusCounts.Joined++;
-        } else if (status2 === 'Offered') {
-          statusCounts.Offered++;
-        } else if (status2 === 'Offered Drop') {
-          statusCounts['Offered Drop']++;
-        } else if (status2 === 'Selected') {
-          statusCounts.Selected++;
-        }
+        statusCategories.forEach(category => {
+          if (checkCandidateStatus(candidate, category)) {
+            statusCounts[category as keyof typeof statusCounts]++;
+          }
+        });
       });
 
       return {
@@ -356,21 +326,13 @@ const InterviewConversionReport: React.FC = () => {
 
     const exportData = status2OverviewData.map(item => ({
       'Month': item.month,
-      'Documentation': item.Documentation,
-      'Drop': item.Drop,
-      'Feedback Awaited': item['Feedback Awaited'],
-      'Final Reject': item['Final Reject'],
-      'Hold': item.Hold,
-      'Interview Reject': item['Interview Reject'],
-      'Joined': item.Joined,
-      'Offered': item.Offered,
-      'Offered Drop': item['Offered Drop'],
-      'Selected': item.Selected,
-      'Shortlisted': item.Shortlisted,
-      'SL-2+': item['SL-2+']
+      'Attended': item['Attended'],
+      'Rejected': item['Rejected'],
+      'SL -2nd Round+': item['SL -2nd Round+'],
+      'Offered': item['Offered']
     }));
 
-    const fileName = `status2-overview-report-${format(new Date(), 'yyyy-MM-dd')}`;
+    const fileName = `attended-cases-overview-report-${format(new Date(), 'yyyy-MM-dd')}`;
     exportToExcel(exportData, fileName);
   };
 
