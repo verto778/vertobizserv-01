@@ -69,22 +69,37 @@ const InterviewConversionReport: React.FC = () => {
 
   // Custom status checking functions based on user requirements
   const checkCandidateStatus = (candidate: Candidate, category: string): boolean => {
+    const round = parseInt(candidate.interviewRound || '1');
+    
     switch (category) {
       case 'Attended':
-        // Show total number of attended interviews per month
+        // Show whose status1 is 'Attended' (ignore status2)
         return candidate.status1 === 'Attended';
         
       case 'Rejected':
-        // Show sum of Interview Reject + Final Reject per month
+        // Show sum of Interview Reject and Final Reject from status2
         return candidate.status2 === 'Interview Reject' || candidate.status2 === 'Final Reject';
         
       case 'SL -2nd Round+':
-        // Show sum of Documentation + Shortlisted per month
-        return candidate.status2 === 'Documentation' || candidate.status2 === 'Shortlisted';
+        // Show candidates whose round is 2+ AND status2 is 'Selected' (exclusive check)
+        return round >= 2 && candidate.status2 === 'Selected';
         
-      case 'Offered':
-        // Show only the Offered count per month
-        return candidate.status2 === 'Offered';
+      case 'Selected / Offered':
+        // Show whose status2 is 'Selected' (but NOT in round 2+) or 'Offered'
+        // This ensures no overlap with 'SL -2nd Round+' category
+        return (candidate.status2 === 'Selected' && round < 2) || candidate.status2 === 'Offered';
+        
+      case 'Feedback Awaited':
+        // Show whose status2 is 'Feedback Awaited' (ignore status1)
+        return candidate.status2 === 'Feedback Awaited';
+        
+      case 'Others':
+        // Everything else not covered by above categories
+        return candidate.status1 !== 'Attended' &&
+               !(candidate.status2 === 'Interview Reject' || candidate.status2 === 'Final Reject') &&
+               !(round >= 2 && candidate.status2 === 'Selected') &&
+               !((candidate.status2 === 'Selected' && round < 2) || candidate.status2 === 'Offered') &&
+               candidate.status2 !== 'Feedback Awaited';
         
       default:
         return false;
@@ -92,7 +107,7 @@ const InterviewConversionReport: React.FC = () => {
   };
 
   // Define status categories for the report
-  const statusCategories = ['Attended', 'Rejected', 'SL -2nd Round+', 'Offered'];
+  const statusCategories = ['Attended', 'Rejected', 'SL -2nd Round+', 'Selected / Offered', 'Feedback Awaited', 'Others'];
 
   // Process candidates data for conversion analysis
   const conversionData = useMemo((): ConversionDataItem[] => {
@@ -230,20 +245,50 @@ const InterviewConversionReport: React.FC = () => {
         });
       }
 
-      // Count by status categories using the same logic as conversionData
+      // Count by status2 categories
       const statusCounts = {
-        'Attended': 0,
-        'Rejected': 0,
-        'SL -2nd Round+': 0,
-        'Offered': 0
+        Documentation: 0,
+        Drop: 0,
+        'Feedback Awaited': 0,
+        'Final Reject': 0,
+        Hold: 0,
+        'Interview Reject': 0,
+        Joined: 0,
+        Offered: 0,
+        'Offered Drop': 0,
+        Selected: 0,
+        Shortlisted: 0,
+        'SL-2+': 0
       };
 
       monthCandidates.forEach(candidate => {
-        statusCategories.forEach(category => {
-          if (checkCandidateStatus(candidate, category)) {
-            statusCounts[category as keyof typeof statusCounts]++;
-          }
-        });
+        const status2 = candidate.status2;
+        
+        if (status2 === 'Documentation') {
+          statusCounts.Documentation++;
+          statusCounts['SL-2+']++;
+        } else if (status2 === 'Shortlisted') {
+          statusCounts.Shortlisted++;
+          statusCounts['SL-2+']++;
+        } else if (status2 === 'Drop') {
+          statusCounts.Drop++;
+        } else if (status2 === 'Feedback Awaited') {
+          statusCounts['Feedback Awaited']++;
+        } else if (status2 === 'Final Reject') {
+          statusCounts['Final Reject']++;
+        } else if (status2 === 'Hold') {
+          statusCounts.Hold++;
+        } else if (status2 === 'Interview Reject') {
+          statusCounts['Interview Reject']++;
+        } else if (status2 === 'Joined') {
+          statusCounts.Joined++;
+        } else if (status2 === 'Offered') {
+          statusCounts.Offered++;
+        } else if (status2 === 'Offered Drop') {
+          statusCounts['Offered Drop']++;
+        } else if (status2 === 'Selected') {
+          statusCounts.Selected++;
+        }
       });
 
       return {
@@ -326,13 +371,21 @@ const InterviewConversionReport: React.FC = () => {
 
     const exportData = status2OverviewData.map(item => ({
       'Month': item.month,
-      'Attended': item['Attended'],
-      'Rejected': item['Rejected'],
-      'SL -2nd Round+': item['SL -2nd Round+'],
-      'Offered': item['Offered']
+      'Documentation': item.Documentation,
+      'Drop': item.Drop,
+      'Feedback Awaited': item['Feedback Awaited'],
+      'Final Reject': item['Final Reject'],
+      'Hold': item.Hold,
+      'Interview Reject': item['Interview Reject'],
+      'Joined': item.Joined,
+      'Offered': item.Offered,
+      'Offered Drop': item['Offered Drop'],
+      'Selected': item.Selected,
+      'Shortlisted': item.Shortlisted,
+      'SL-2+': item['SL-2+']
     }));
 
-    const fileName = `attended-cases-overview-report-${format(new Date(), 'yyyy-MM-dd')}`;
+    const fileName = `status2-overview-report-${format(new Date(), 'yyyy-MM-dd')}`;
     exportToExcel(exportData, fileName);
   };
 

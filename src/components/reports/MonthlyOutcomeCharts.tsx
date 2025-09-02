@@ -26,7 +26,9 @@ const MonthlyOutcomeCharts: React.FC<MonthlyOutcomeChartsProps> = ({
     'Attended': '#10B981', // Green
     'Rejected': '#EF4444', // Red
     'SL -2nd Round+': '#F59E0B', // Amber
-    'Offered': '#8B5CF6' // Purple
+    'Selected / Offered': '#8B5CF6', // Purple
+    'Feedback Awaited': '#3B82F6', // Blue
+    'Others': '#6B7280' // Gray
   };
 
   // Create chart data for each status

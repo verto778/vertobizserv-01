@@ -21,18 +21,14 @@ import { Candidate } from '@/components/candidates/types';
 
 interface AttendedCasesData {
   month: string;
-  Documentation: number;
-  Drop: number;
-  'Feedback Awaited': number;
-  'Final Reject': number;
-  Hold: number;
-  'Interview Reject': number;
-  Joined: number;
-  Offered: number;
-  'Offered Drop': number;
-  Selected: number;
-  Shortlisted: number;
-  'SL-2+': number;
+  Attended: number;
+  'Client Conf Pending': number;
+  Confirmed: number;
+  'Not Attended': number;
+  'Not Interested': number;
+  'Position Hold': number;
+  Reschedule: number;
+  'Yet to Confirm': number;
 }
 
 interface AttendedCasesReportsProps {
@@ -66,34 +62,33 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
   const finalSelectedRecruiters = selectedRecruiters.length > 0 ? selectedRecruiters : localSelectedRecruiters;
   const finalSelectedManagers = selectedManagers.length > 0 ? selectedManagers : localSelectedManagers;
 
-  // Status checking function based on status2 field
+  // Custom status checking function for new 8 categories based on status1
   const checkCandidateStatus = (candidate: Candidate, category: string): boolean => {
     switch (category) {
-      case 'Documentation':
-        return candidate.status2 === 'Documentation';
-      case 'Drop':
-        return candidate.status2 === 'Drop';
-      case 'Feedback Awaited':
-        return candidate.status2 === 'Feedback Awaited';
-      case 'Final Reject':
-        return candidate.status2 === 'Final Reject';
-      case 'Hold':
-        return candidate.status2 === 'Hold';
-      case 'Interview Reject':
-        return candidate.status2 === 'Interview Reject';
-      case 'Joined':
-        return candidate.status2 === 'Joined';
-      case 'Offered':
-        return candidate.status2 === 'Offered';
-      case 'Offered Drop':
-        return candidate.status2 === 'Offered Drop';
-      case 'Selected':
-        return candidate.status2 === 'Selected';
-      case 'Shortlisted':
-        return candidate.status2 === 'Shortlisted';
-      case 'SL-2+':
-        // Special logic: sum of Shortlisted + Documentation
-        return candidate.status2 === 'Shortlisted' || candidate.status2 === 'Documentation';
+      case 'Attended':
+        return candidate.status1 === 'Attended';
+        
+      case 'Client Conf Pending':
+        return candidate.status1 === 'Client Conf Pending';
+        
+      case 'Confirmed':
+        return candidate.status1 === 'Confirmed';
+        
+      case 'Not Attended':
+        return candidate.status1 === 'Not Attended';
+        
+      case 'Not Interested':
+        return candidate.status1 === 'Not Interested';
+        
+      case 'Position Hold':
+        return candidate.status1 === 'Position Hold';
+        
+      case 'Reschedule':
+        return candidate.status1 === 'Reschedule';
+        
+      case 'Yet to Confirm':
+        return candidate.status1 === 'Yet to Confirm';
+        
       default:
         return false;
     }
@@ -154,24 +149,26 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
     });
 
     console.log('After client/recruiter filter:', filteredCandidates.length);
+    console.log('Candidates with missing dateInformed:', filteredCandidates.filter(c => !c.dateInformed).length);
+    console.log('Sample candidates with dates:', filteredCandidates.slice(0, 5).map(c => ({ name: c.name, dateInformed: c.dateInformed, status1: c.status1 })));
 
     // Process data by month
     const monthlyData = months.map(monthInfo => {
       let monthCandidates;
       
       if (dateRange?.from && dateRange?.to) {
-        // If parent date range is provided, filter by the parent date range using interview date
+        // If parent date range is provided, filter by the parent date range
         monthCandidates = filteredCandidates.filter(candidate => {
-          const candidateDate = candidate.interviewDate;
+          const candidateDate = candidate.dateInformed;
           if (!candidateDate) return false;
           
           const candidateDateObj = new Date(candidateDate);
           return candidateDateObj >= dateRange.from! && candidateDateObj <= dateRange.to!;
         });
       } else {
-        // Otherwise, filter by month using interview date
+        // Otherwise, filter by month
         monthCandidates = filteredCandidates.filter(candidate => {
-          const candidateDate = candidate.interviewDate;
+          const candidateDate = candidate.dateInformed;
           if (!candidateDate) return false;
           
           const candidateDateObj = new Date(candidateDate);
@@ -181,50 +178,37 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
 
       console.log(`Month ${monthInfo.monthName} candidates:`, monthCandidates.length);
 
-      // Count by status2 categories
+      // Count by status categories
       const statusCounts = {
-        Documentation: 0,
-        Drop: 0,
-        'Feedback Awaited': 0,
-        'Final Reject': 0,
-        Hold: 0,
-        'Interview Reject': 0,
-        Joined: 0,
-        Offered: 0,
-        'Offered Drop': 0,
-        Selected: 0,
-        Shortlisted: 0,
-        'SL-2+': 0
+        Attended: 0,
+        'Client Conf Pending': 0,
+        Confirmed: 0,
+        'Not Attended': 0,
+        'Not Interested': 0,
+        'Position Hold': 0,
+        Reschedule: 0,
+        'Yet to Confirm': 0
       };
 
       monthCandidates.forEach(candidate => {
-        const status2 = candidate.status2;
+        console.log(`Candidate ${candidate.name} has status1: ${candidate.status1}`);
         
-        // Count individual status2 categories
-        if (status2 === 'Documentation') {
-          statusCounts.Documentation++;
-          statusCounts['SL-2+']++; // Also count for SL-2+
-        } else if (status2 === 'Drop') {
-          statusCounts.Drop++;
-        } else if (status2 === 'Feedback Awaited') {
-          statusCounts['Feedback Awaited']++;
-        } else if (status2 === 'Final Reject') {
-          statusCounts['Final Reject']++;
-        } else if (status2 === 'Hold') {
-          statusCounts.Hold++;
-        } else if (status2 === 'Interview Reject') {
-          statusCounts['Interview Reject']++;
-        } else if (status2 === 'Joined') {
-          statusCounts.Joined++;
-        } else if (status2 === 'Offered') {
-          statusCounts.Offered++;
-        } else if (status2 === 'Offered Drop') {
-          statusCounts['Offered Drop']++;
-        } else if (status2 === 'Selected') {
-          statusCounts.Selected++;
-        } else if (status2 === 'Shortlisted') {
-          statusCounts.Shortlisted++;
-          statusCounts['SL-2+']++; // Also count for SL-2+
+        // Check each category using status1
+        const categories = ['Attended', 'Client Conf Pending', 'Confirmed', 'Not Attended', 'Not Interested', 'Position Hold', 'Reschedule', 'Yet to Confirm'];
+        let categorized = false;
+        
+        for (const category of categories) {
+          if (checkCandidateStatus(candidate, category)) {
+            statusCounts[category as keyof typeof statusCounts]++;
+            categorized = true;
+            console.log(`Categorized as ${category}`);
+            break;
+          }
+        }
+        
+        // Log if not categorized (this should rarely happen now)
+        if (!categorized) {
+          console.log(`Status1 '${candidate.status1}' not recognized for candidate ${candidate.name}`);
         }
       });
 
@@ -236,11 +220,14 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
       };
     });
 
+    // If using date range from parent, return the monthly data as-is
+    // (the date filtering was already applied in the monthlyData processing above)
+
     console.log('Final monthly data:', monthlyData);
     return monthlyData;
   }, [candidates, finalSelectedClients, finalSelectedRecruiters, finalSelectedManagers, timeRange, customDateRange, dateRange]);
 
-  // Calculate percentage data
+  // Calculate percentage data for Report2b - fixed logic
   const attendedCasesPercentageData = useMemo((): AttendedCasesData[] => {
     return attendedCasesData.map(monthData => {
       // Calculate total for the month (excluding the month name)
@@ -254,36 +241,28 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
         // If no data for this month, return zeros
         return {
           month: monthData.month,
-          Documentation: 0,
-          Drop: 0,
-          'Feedback Awaited': 0,
-          'Final Reject': 0,
-          Hold: 0,
-          'Interview Reject': 0,
-          Joined: 0,
-          Offered: 0,
-          'Offered Drop': 0,
-          Selected: 0,
-          Shortlisted: 0,
-          'SL-2+': 0
+          Attended: 0,
+          'Client Conf Pending': 0,
+          Confirmed: 0,
+          'Not Attended': 0,
+          'Not Interested': 0,
+          'Position Hold': 0,
+          Reschedule: 0,
+          'Yet to Confirm': 0
         };
       }
       
       // Calculate percentages for each category
       const percentageData = {
         month: monthData.month,
-        Documentation: Math.round((monthData.Documentation / total) * 100),
-        Drop: Math.round((monthData.Drop / total) * 100),
-        'Feedback Awaited': Math.round((monthData['Feedback Awaited'] / total) * 100),
-        'Final Reject': Math.round((monthData['Final Reject'] / total) * 100),
-        Hold: Math.round((monthData.Hold / total) * 100),
-        'Interview Reject': Math.round((monthData['Interview Reject'] / total) * 100),
-        Joined: Math.round((monthData.Joined / total) * 100),
-        Offered: Math.round((monthData.Offered / total) * 100),
-        'Offered Drop': Math.round((monthData['Offered Drop'] / total) * 100),
-        Selected: Math.round((monthData.Selected / total) * 100),
-        Shortlisted: Math.round((monthData.Shortlisted / total) * 100),
-        'SL-2+': Math.round((monthData['SL-2+'] / total) * 100)
+        Attended: Math.round((monthData.Attended / total) * 100),
+        'Client Conf Pending': Math.round((monthData['Client Conf Pending'] / total) * 100),
+        Confirmed: Math.round((monthData.Confirmed / total) * 100),
+        'Not Attended': Math.round((monthData['Not Attended'] / total) * 100),
+        'Not Interested': Math.round((monthData['Not Interested'] / total) * 100),
+        'Position Hold': Math.round((monthData['Position Hold'] / total) * 100),
+        Reschedule: Math.round((monthData.Reschedule / total) * 100),
+        'Yet to Confirm': Math.round((monthData['Yet to Confirm'] / total) * 100)
       };
       
       console.log(`Month ${monthData.month} percentages:`, percentageData);
@@ -306,18 +285,14 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
 
     const exportData = dataToExport.map(item => ({
       'Month': item.month,
-      'Documentation': isPercentage ? `${item.Documentation}%` : item.Documentation,
-      'Drop': isPercentage ? `${item.Drop}%` : item.Drop,
-      'Feedback Awaited': isPercentage ? `${item['Feedback Awaited']}%` : item['Feedback Awaited'],
-      'Final Reject': isPercentage ? `${item['Final Reject']}%` : item['Final Reject'],
-      'Hold': isPercentage ? `${item.Hold}%` : item.Hold,
-      'Interview Reject': isPercentage ? `${item['Interview Reject']}%` : item['Interview Reject'],
-      'Joined': isPercentage ? `${item.Joined}%` : item.Joined,
-      'Offered': isPercentage ? `${item.Offered}%` : item.Offered,
-      'Offered Drop': isPercentage ? `${item['Offered Drop']}%` : item['Offered Drop'],
-      'Selected': isPercentage ? `${item.Selected}%` : item.Selected,
-      'Shortlisted': isPercentage ? `${item.Shortlisted}%` : item.Shortlisted,
-      'SL-2+': isPercentage ? `${item['SL-2+']}%` : item['SL-2+']
+      'Attended': isPercentage ? `${item.Attended}%` : item.Attended,
+      'Client Conf Pending': isPercentage ? `${item['Client Conf Pending']}%` : item['Client Conf Pending'],
+      'Confirmed': isPercentage ? `${item.Confirmed}%` : item.Confirmed,
+      'Not Attended': isPercentage ? `${item['Not Attended']}%` : item['Not Attended'],
+      'Not Interested': isPercentage ? `${item['Not Interested']}%` : item['Not Interested'],
+      'Position Hold': isPercentage ? `${item['Position Hold']}%` : item['Position Hold'],
+      'Reschedule': isPercentage ? `${item.Reschedule}%` : item.Reschedule,
+      'Yet to Confirm': isPercentage ? `${item['Yet to Confirm']}%` : item['Yet to Confirm']
     }));
 
     const fileName = `attended-cases-${isPercentage ? 'percentage' : 'count'}-report-${format(new Date(), 'yyyy-MM-dd')}`;
@@ -426,8 +401,8 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
             data={attendedCasesData}
             isPercentage={false}
             onExportExcel={() => handleExportExcel(false)}
-            title="Attended Cases – Overview"
-            description="Monthly breakdown of interview outcomes based on status2 field (absolute numbers)"
+            title="Interview Cases - Counts"
+            description="Monthly breakdown of interview outcomes (absolute numbers)"
           />
         </TabsContent>
 
@@ -436,8 +411,8 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
             data={attendedCasesPercentageData}
             isPercentage={true}
             onExportExcel={() => handleExportExcel(true)}
-            title="Attended Cases – Overview (Percentage)"
-            description="Monthly breakdown of interview outcomes based on status2 field (percentage distribution)"
+            title="Interview Count Percentage"
+            description="Monthly breakdown of interview outcomes (percentage distribution)"
           />
         </TabsContent>
       </Tabs>
