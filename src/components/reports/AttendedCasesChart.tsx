@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -8,14 +7,18 @@ import { Download } from 'lucide-react';
 
 interface AttendedCasesData {
   month: string;
-  Attended: number;
-  'Client Conf Pending': number;
-  Confirmed: number;
-  'Not Attended': number;
-  'Not Interested': number;
-  'Position Hold': number;
-  Reschedule: number;
-  'Yet to Confirm': number;
+  Documentation: number;
+  Drop: number;
+  'Feedback Awaited': number;
+  'Final Reject': number;
+  Hold: number;
+  'Interview Reject': number;
+  Joined: number;
+  Offered: number;
+  'Offered Drop': number;
+  Selected: number;
+  Shortlisted: number;
+  'SL-2+': number;
 }
 
 interface AttendedCasesChartProps {
@@ -27,36 +30,52 @@ interface AttendedCasesChartProps {
 }
 
 const chartConfig = {
-  Attended: {
-    label: "Attended",
+  Documentation: {
+    label: "Documentation",
     color: "#10B981",
   },
-  "Client Conf Pending": {
-    label: "Client Conf Pending", 
+  Drop: {
+    label: "Drop", 
     color: "#EF4444",
   },
-  Confirmed: {
-    label: "Confirmed",
+  "Feedback Awaited": {
+    label: "Feedback Awaited",
     color: "#F59E0B",
   },
-  "Not Attended": {
-    label: "Not Attended",
+  "Final Reject": {
+    label: "Final Reject",
     color: "#8B5CF6",
   },
-  "Not Interested": {
-    label: "Not Interested",
+  Hold: {
+    label: "Hold",
     color: "#06B6D4",
   },
-  "Position Hold": {
-    label: "Position Hold",
+  "Interview Reject": {
+    label: "Interview Reject",
     color: "#6B7280",
   },
-  Reschedule: {
-    label: "Reschedule",
+  Joined: {
+    label: "Joined",
     color: "#FB7185",
   },
-  "Yet to Confirm": {
-    label: "Yet to Confirm",
+  Offered: {
+    label: "Offered",
+    color: "#84CC16",
+  },
+  "Offered Drop": {
+    label: "Offered Drop",
+    color: "#F97316",
+  },
+  Selected: {
+    label: "Selected",
+    color: "#06B6D4",
+  },
+  Shortlisted: {
+    label: "Shortlisted",
+    color: "#8B5CF6",
+  },
+  "SL-2+": {
+    label: "SL-2+",
     color: "#FBBF24",
   },
 };
@@ -113,52 +132,76 @@ const AttendedCasesChart: React.FC<AttendedCasesChartProps> = ({
               <ChartTooltip content={<ChartTooltipContent />} />
               <Legend />
               <Bar 
-                dataKey="Attended" 
+                dataKey="Documentation" 
                 stackId="a"
                 fill="#10B981"
-                name="Attended"
+                name="Documentation"
               />
               <Bar 
-                dataKey="Client Conf Pending" 
+                dataKey="Drop" 
                 stackId="a"
                 fill="#EF4444"
-                name="Client Conf Pending"
+                name="Drop"
               />
               <Bar 
-                dataKey="Confirmed" 
+                dataKey="Feedback Awaited" 
                 stackId="a"
                 fill="#F59E0B"
-                name="Confirmed"
+                name="Feedback Awaited"
               />
               <Bar 
-                dataKey="Not Attended" 
+                dataKey="Final Reject" 
                 stackId="a"
                 fill="#8B5CF6"
-                name="Not Attended"
+                name="Final Reject"
               />
               <Bar 
-                dataKey="Not Interested" 
+                dataKey="Hold" 
                 stackId="a"
                 fill="#06B6D4"
-                name="Not Interested"
+                name="Hold"
               />
               <Bar 
-                dataKey="Position Hold" 
+                dataKey="Interview Reject" 
                 stackId="a"
                 fill="#6B7280"
-                name="Position Hold"
+                name="Interview Reject"
               />
               <Bar 
-                dataKey="Reschedule" 
+                dataKey="Joined" 
                 stackId="a"
                 fill="#FB7185"
-                name="Reschedule"
+                name="Joined"
               />
               <Bar 
-                dataKey="Yet to Confirm" 
+                dataKey="Offered" 
+                stackId="a"
+                fill="#84CC16"
+                name="Offered"
+              />
+              <Bar 
+                dataKey="Offered Drop" 
+                stackId="a"
+                fill="#F97316"
+                name="Offered Drop"
+              />
+              <Bar 
+                dataKey="Selected" 
+                stackId="a"
+                fill="#06B6D4"
+                name="Selected"
+              />
+              <Bar 
+                dataKey="Shortlisted" 
+                stackId="a"
+                fill="#8B5CF6"
+                name="Shortlisted"
+              />
+              <Bar 
+                dataKey="SL-2+" 
                 stackId="a"
                 fill="#FBBF24"
-                name="Yet to Confirm"
+                name="SL-2+"
               />
             </BarChart>
           </ResponsiveContainer>
