@@ -78,10 +78,10 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
     return recruiterName && self.findIndex(r => (r.name || r.recruiter_name) === recruiterName) === index;
   }) : [];
 
-  // Get unique manager names
+  // Get unique manager names with better deduplication
   const uniqueManagers = managers ? managers.filter((manager, index, self) => {
-    const managerName = manager.name;
-    return managerName && self.findIndex(m => m.name === managerName) === index;
+    const managerName = manager.name?.trim();
+    return managerName && managerName !== '' && self.findIndex(m => m.name?.trim() === managerName) === index;
   }) : [];
 
   return (
