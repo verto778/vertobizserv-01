@@ -401,6 +401,7 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
             data={attendedCasesData}
             isPercentage={false}
             onExportExcel={() => handleExportExcel(false)}
+            onExportPercentageExcel={() => handleExportExcel(true)}
             title="Interview Cases - Counts"
             description="Monthly breakdown of interview outcomes (absolute numbers)"
           />

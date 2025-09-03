@@ -22,6 +22,7 @@ interface AttendedCasesChartProps {
   data: AttendedCasesData[];
   isPercentage?: boolean;
   onExportExcel: () => void;
+  onExportPercentageExcel?: () => void;
   title: string;
   description: string;
 }
@@ -65,6 +66,7 @@ const AttendedCasesChart: React.FC<AttendedCasesChartProps> = ({
   data, 
   isPercentage = false, 
   onExportExcel,
+  onExportPercentageExcel,
   title,
   description 
 }) => {
@@ -76,10 +78,18 @@ const AttendedCasesChart: React.FC<AttendedCasesChartProps> = ({
             <CardTitle>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
-          <Button onClick={onExportExcel} className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Download Excel
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={onExportExcel} className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Download Excel (Count)
+            </Button>
+            {onExportPercentageExcel && (
+              <Button onClick={onExportPercentageExcel} variant="outline" className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Download Excel (%)
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
