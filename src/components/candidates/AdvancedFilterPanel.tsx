@@ -48,15 +48,17 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
   const [sortClientsAlphabetically, setSortClientsAlphabetically] = useState(false);
   const [sortPositionsAlphabetically, setSortPositionsAlphabetically] = useState(false);
 
-  // Get unique managers from candidates
+  // Get unique managers from candidates with better deduplication
   const uniqueManagers = useMemo(() => {
     const managers = new Set<string>();
     candidates.forEach(candidate => {
       if (candidate.manager && candidate.manager.trim() !== '') {
-        managers.add(candidate.manager);
+        // Normalize the manager name: trim whitespace and handle case consistency
+        const normalizedManager = candidate.manager.trim();
+        managers.add(normalizedManager);
       }
     });
-    return Array.from(managers).sort();
+    return Array.from(managers).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [candidates]);
 
   // Get the selected client ID based on the client name

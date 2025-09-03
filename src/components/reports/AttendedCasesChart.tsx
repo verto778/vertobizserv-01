@@ -110,7 +110,39 @@ const AttendedCasesChart: React.FC<AttendedCasesChartProps> = ({
                   position: 'insideLeft' 
                 }}
               />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip 
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    const total = payload.reduce((sum, entry) => sum + (entry.value as number), 0);
+                    return (
+                      <div className="bg-white p-3 border rounded shadow-lg">
+                        <p className="font-medium mb-2">{label}</p>
+                        {payload.map((entry, index) => {
+                          const percentage = total > 0 ? ((entry.value as number) / total * 100).toFixed(1) : '0.0';
+                          return (
+                            <div key={index} className="flex items-center gap-2 text-sm">
+                              <div 
+                                className="w-3 h-3 rounded" 
+                                style={{ backgroundColor: entry.color }}
+                              />
+                              <span>{entry.name}:</span>
+                              <span className="font-medium">
+                                {isPercentage ? `${entry.value}%` : `${entry.value} (${percentage}%)`}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        {!isPercentage && (
+                          <div className="mt-2 pt-2 border-t text-sm font-medium">
+                            Total: {total}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
               <Legend />
               <Bar 
                 dataKey="Attended" 
