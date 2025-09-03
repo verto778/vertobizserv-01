@@ -227,7 +227,7 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
     return monthlyData;
   }, [candidates, finalSelectedClients, finalSelectedRecruiters, finalSelectedManagers, timeRange, customDateRange, dateRange]);
 
-  // Calculate percentage data for Report2b - fixed logic
+  // Calculate percentage data for Report2b - fixed logic with accurate percentages that sum to 100%
   const attendedCasesPercentageData = useMemo((): AttendedCasesData[] => {
     return attendedCasesData.map(monthData => {
       // Calculate total for the month (excluding the month name)
@@ -252,20 +252,52 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
         };
       }
       
-      // Calculate percentages for each category
+      // Calculate exact percentages first
+      const exactPercentages = {
+        Attended: (monthData.Attended / total) * 100,
+        'Client Conf Pending': (monthData['Client Conf Pending'] / total) * 100,
+        Confirmed: (monthData.Confirmed / total) * 100,
+        'Not Attended': (monthData['Not Attended'] / total) * 100,
+        'Not Interested': (monthData['Not Interested'] / total) * 100,
+        'Position Hold': (monthData['Position Hold'] / total) * 100,
+        Reschedule: (monthData.Reschedule / total) * 100,
+        'Yet to Confirm': (monthData['Yet to Confirm'] / total) * 100
+      };
+      
+      // Round to integers
+      const roundedPercentages = Object.fromEntries(
+        Object.entries(exactPercentages).map(([key, value]) => [key, Math.round(value)])
+      );
+      
+      // Calculate sum of rounded percentages
+      const roundedSum = Object.values(roundedPercentages).reduce((sum, val) => sum + val, 0);
+      
+      // Adjust for rounding errors to ensure sum equals 100
+      if (roundedSum !== 100 && total > 0) {
+        const difference = 100 - roundedSum;
+        // Find the category with the largest exact percentage to adjust
+        const largestCategory = Object.entries(exactPercentages)
+          .reduce((max, [key, value]) => value > max.value ? { key, value } : max, { key: '', value: -1 });
+        
+        if (largestCategory.key) {
+          roundedPercentages[largestCategory.key] += difference;
+        }
+      }
+      
       const percentageData = {
         month: monthData.month,
-        Attended: Math.round((monthData.Attended / total) * 100),
-        'Client Conf Pending': Math.round((monthData['Client Conf Pending'] / total) * 100),
-        Confirmed: Math.round((monthData.Confirmed / total) * 100),
-        'Not Attended': Math.round((monthData['Not Attended'] / total) * 100),
-        'Not Interested': Math.round((monthData['Not Interested'] / total) * 100),
-        'Position Hold': Math.round((monthData['Position Hold'] / total) * 100),
-        Reschedule: Math.round((monthData.Reschedule / total) * 100),
-        'Yet to Confirm': Math.round((monthData['Yet to Confirm'] / total) * 100)
+        Attended: roundedPercentages.Attended,
+        'Client Conf Pending': roundedPercentages['Client Conf Pending'],
+        Confirmed: roundedPercentages.Confirmed,
+        'Not Attended': roundedPercentages['Not Attended'],
+        'Not Interested': roundedPercentages['Not Interested'],
+        'Position Hold': roundedPercentages['Position Hold'],
+        Reschedule: roundedPercentages.Reschedule,
+        'Yet to Confirm': roundedPercentages['Yet to Confirm']
       };
       
       console.log(`Month ${monthData.month} percentages:`, percentageData);
+      console.log(`Sum: ${Object.values(percentageData).filter(v => typeof v === 'number').reduce((a, b) => a + b, 0)}%`);
       return percentageData;
     });
   }, [attendedCasesData]);

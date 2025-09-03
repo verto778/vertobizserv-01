@@ -393,7 +393,7 @@ const InterviewConversionReport: React.FC = () => {
     <div className="space-y-6">
       {/* Main Content Tabs */}
       <Tabs defaultValue="attended-cases" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="attended-cases" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             Interview Cases
@@ -401,18 +401,6 @@ const InterviewConversionReport: React.FC = () => {
           <TabsTrigger value="charts" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Attended Cases
-          </TabsTrigger>
-          <TabsTrigger value="monthly-charts" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Monthly Outcomes
-          </TabsTrigger>
-          <TabsTrigger value="conversion-trends" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Conversion Trends
-          </TabsTrigger>
-          <TabsTrigger value="monthly-breakdown" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Monthly Breakdown
           </TabsTrigger>
         </TabsList>
 
@@ -433,27 +421,6 @@ const InterviewConversionReport: React.FC = () => {
           />
         </TabsContent>
 
-        <TabsContent value="monthly-charts" className="space-y-6">
-          <MonthlyOutcomeCharts 
-            data={conversionData} 
-            statusCategories={statusCategories}
-            onExportExcel={handleExportExcel}
-          />
-        </TabsContent>
-
-        <TabsContent value="conversion-trends" className="space-y-6">
-          <ConversionTrendsChart 
-            data={conversionData} 
-            onExportExcel={handleExportExcel}
-          />
-        </TabsContent>
-
-        <TabsContent value="monthly-breakdown" className="space-y-6">
-          <MonthlyBreakdownChart 
-            data={conversionData} 
-            onExportExcel={handleExportExcel}
-          />
-        </TabsContent>
       </Tabs>
     </div>
   );
