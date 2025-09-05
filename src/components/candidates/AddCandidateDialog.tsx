@@ -6,6 +6,10 @@ import { ClientExtended } from "@/types/client-extended";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { toZonedTime } from 'date-fns-tz';
+
+// India timezone
+const INDIA_TIMEZONE = 'Asia/Kolkata';
 
 interface AddCandidateDialogProps {
   open: boolean;
@@ -40,8 +44,8 @@ export const AddCandidateDialog = ({
       return dateValue;
     }
     
-    // Try to create a new Date and check if it's valid
-    const date = new Date(dateValue);
+    // Try to create a new Date and check if it's valid, treating as India timezone
+    const date = toZonedTime(new Date(dateValue), INDIA_TIMEZONE);
     // Check if it's invalid, Unix epoch, or before 1900 (invalid default)
     if (isNaN(date.getTime()) || date.getTime() <= 0 || date.getFullYear() < 1900) {
       return null;

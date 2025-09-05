@@ -1,6 +1,23 @@
 
 import { Candidate } from '@/components/candidates/types';
 import { supabase } from '@/integrations/supabase/client';
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
+
+// India timezone
+const INDIA_TIMEZONE = 'Asia/Kolkata';
+
+// Convert date to India timezone for storage
+const toIndiaTimezone = (date: Date): string => {
+  // Convert the date to India timezone and format as ISO string
+  const indiaDate = toZonedTime(date, INDIA_TIMEZONE);
+  return formatInTimeZone(indiaDate, INDIA_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+};
+
+// Convert ISO string from database to India timezone Date object
+const fromIndiaTimezone = (isoString: string): Date => {
+  // Parse the date and ensure it's treated as India timezone
+  return toZonedTime(new Date(isoString), INDIA_TIMEZONE);
+};
 
 export const candidateService = {
   async saveCandidate(candidate: Candidate, isUpdating: boolean = false): Promise<Candidate> {
@@ -29,7 +46,7 @@ export const candidateService = {
       isUpdating
     });
 
-    const currentTimestamp = new Date().toISOString();
+    const currentTimestamp = toIndiaTimezone(new Date());
     
     if (isUpdating) {
       // For updates, we must have a valid candidate ID
@@ -41,7 +58,7 @@ export const candidateService = {
         name: candidate.name,
         contact_number: candidate.contactNumber,
         email: candidate.email,
-        interview_date: candidate.interviewDate ? candidate.interviewDate.toISOString() : null,
+        interview_date: candidate.interviewDate ? toIndiaTimezone(candidate.interviewDate) : null,
         interview_time: candidate.interviewTime || '',
         interview_round: candidate.interviewRound || '',
         interview_mode: candidate.interviewMode || '',
@@ -51,7 +68,7 @@ export const candidateService = {
         client_name: candidate.clientName || '',
         position: candidate.position || '',
         recruiter_name: candidate.recruiterName || '',
-        date_informed: candidate.dateInformed ? candidate.dateInformed.toISOString() : null,
+        date_informed: candidate.dateInformed ? toIndiaTimezone(candidate.dateInformed) : null,
         remarks: candidate.remarks || '',
         Manager: candidate.manager || '', // FIXED: Ensure manager field is properly saved
         updated_at: currentTimestamp,
@@ -81,7 +98,7 @@ export const candidateService = {
         name: data.name,
         contactNumber: data.contact_number,
         email: data.email,
-        interviewDate: data.interview_date ? new Date(data.interview_date) : null,
+        interviewDate: data.interview_date ? fromIndiaTimezone(data.interview_date) : null,
         interviewTime: data.interview_time,
         interviewRound: data.interview_round,
         interviewMode: data.interview_mode,
@@ -91,7 +108,7 @@ export const candidateService = {
         clientName: data.client_name,
         position: data.position,
         recruiterName: data.recruiter_name,
-        dateInformed: data.date_informed ? new Date(data.date_informed) : null,
+        dateInformed: data.date_informed ? fromIndiaTimezone(data.date_informed) : null,
         remarks: data.remarks || '',
         manager: data.Manager || '', // FIXED: Properly map Manager field from database
       };
@@ -107,7 +124,7 @@ export const candidateService = {
         name: candidate.name,
         contact_number: candidate.contactNumber,
         email: candidate.email,
-        interview_date: candidate.interviewDate ? candidate.interviewDate.toISOString() : null,
+        interview_date: candidate.interviewDate ? toIndiaTimezone(candidate.interviewDate) : null,
         interview_time: candidate.interviewTime || '',
         interview_round: candidate.interviewRound || '',
         interview_mode: candidate.interviewMode || '',
@@ -117,7 +134,7 @@ export const candidateService = {
         client_name: candidate.clientName || '',
         position: candidate.position || '',
         recruiter_name: candidate.recruiterName || '',
-        date_informed: candidate.dateInformed ? candidate.dateInformed.toISOString() : null,
+        date_informed: candidate.dateInformed ? toIndiaTimezone(candidate.dateInformed) : null,
         remarks: candidate.remarks || '',
         Manager: candidate.manager || '', // FIXED: Ensure manager field is properly saved
         created_at: currentTimestamp,
@@ -147,7 +164,7 @@ export const candidateService = {
         name: data.name,
         contactNumber: data.contact_number,
         email: data.email,
-        interviewDate: data.interview_date ? new Date(data.interview_date) : null,
+        interviewDate: data.interview_date ? fromIndiaTimezone(data.interview_date) : null,
         interviewTime: data.interview_time,
         interviewRound: data.interview_round,
         interviewMode: data.interview_mode,
@@ -157,7 +174,7 @@ export const candidateService = {
         clientName: data.client_name,
         position: data.position,
         recruiterName: data.recruiter_name,
-        dateInformed: data.date_informed ? new Date(data.date_informed) : null,
+        dateInformed: data.date_informed ? fromIndiaTimezone(data.date_informed) : null,
         remarks: data.remarks || '',
         manager: data.Manager || '', // FIXED: Properly map Manager field from database
       };
@@ -193,7 +210,7 @@ export const candidateService = {
       name: candidate.name,
       contactNumber: candidate.contact_number,
       email: candidate.email,
-      interviewDate: candidate.interview_date ? new Date(candidate.interview_date) : null,
+      interviewDate: candidate.interview_date ? fromIndiaTimezone(candidate.interview_date) : null,
       interviewTime: candidate.interview_time,
       interviewRound: candidate.interview_round,
       interviewMode: candidate.interview_mode,
@@ -203,7 +220,7 @@ export const candidateService = {
       clientName: candidate.client_name,
       position: candidate.position,
       recruiterName: candidate.recruiter_name,
-      dateInformed: candidate.date_informed ? new Date(candidate.date_informed) : null,
+      dateInformed: candidate.date_informed ? fromIndiaTimezone(candidate.date_informed) : null,
       remarks: candidate.remarks || '',
       manager: candidate.Manager || '', // FIXED: Properly map Manager field from database
     }));
