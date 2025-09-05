@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { format, parseISO, isValid, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
@@ -119,16 +120,30 @@ export const useFilteredData = () => {
         return;
       }
       
-      // Format dates in the data for better readability
+      const INDIA_TIMEZONE = 'Asia/Kolkata';
+      
+      // Format dates in the data for better readability with India timezone
       const formattedData = exportData.map(item => {
         const newItem = { ...item };
         
-        // Format created_at date if exists
+        // Format created_at date if exists (Info Date)
         if (newItem.created_at && typeof newItem.created_at === 'string') {
           try {
             const date = parseISO(newItem.created_at);
             if (isValid(date)) {
-              newItem.created_at = format(date, 'MMM dd, yyyy HH:mm');
+              newItem.created_at = formatInTimeZone(date, INDIA_TIMEZONE, 'MMM dd, yyyy HH:mm');
+            }
+          } catch (e) {
+            // Keep original if parsing fails
+          }
+        }
+        
+        // Format date_informed if exists (candidates)
+        if (newItem.date_informed && typeof newItem.date_informed === 'string') {
+          try {
+            const date = parseISO(newItem.date_informed);
+            if (isValid(date)) {
+              newItem.date_informed = formatInTimeZone(date, INDIA_TIMEZONE, 'MMM dd, yyyy');
             }
           } catch (e) {
             // Keep original if parsing fails
@@ -140,7 +155,7 @@ export const useFilteredData = () => {
           try {
             const date = parseISO(newItem.interview_date);
             if (isValid(date)) {
-              newItem.interview_date = format(date, 'MMM dd, yyyy');
+              newItem.interview_date = formatInTimeZone(date, INDIA_TIMEZONE, 'MMM dd, yyyy');
             }
           } catch (e) {
             // Keep original if parsing fails
