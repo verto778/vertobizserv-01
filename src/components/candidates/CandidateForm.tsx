@@ -20,7 +20,6 @@ import StatusSection from './form-sections/StatusSection';
 import ClientSection from './form-sections/ClientSection';
 import RecruiterSection from './form-sections/RecruiterSection';
 import RemarksSection from './form-sections/RemarksSection';
-import { ManagerSection } from './form-sections/ManagerSection';
 import FormField from '../FormField';
 
 export interface CandidateFormProps {
@@ -406,18 +405,20 @@ const CandidateForm = ({
           </div>
         </div>
 
-          <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-            <h3 className="text-md font-medium text-blue-700 mb-3">Manager Information</h3>
-            <FormField id="manager" label="Manager">
-              <ManagerSection
-                value={formData.manager || ''}
-                onChange={(value) => handleInputChangeWithValidation({
-                  target: { name: 'manager', value }
-                } as React.ChangeEvent<HTMLInputElement>)}
-                placeholder="Select a manager"
-              />
-            </FormField>
-          </div>
+         <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
+           <h3 className="text-md font-medium text-blue-700 mb-3">Manager Information</h3>
+           <FormField id="manager" label="Manager">
+             <input
+               type="text"
+               id="manager"
+               name="manager"
+               value={formData.manager || ''}
+               onChange={handleInputChangeWithValidation}
+               className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+               placeholder="Enter manager name"
+             />
+           </FormField>
+         </div>
 
         <div className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
           <h3 className="text-md font-medium text-blue-700 mb-3">Additional Notes</h3>
