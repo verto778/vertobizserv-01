@@ -10,7 +10,8 @@ import {
   Users,
   Briefcase,
   Shield,
-  FileText
+  FileText,
+  UserCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NavItem from './NavItem';
@@ -70,6 +71,13 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ collapsed, onLogoutClick }) => 
           text="Recruiters" 
           to="/recruiters"
           active={location.pathname === '/recruiters'} 
+          collapsed={collapsed} 
+        />
+        <NavItem 
+          icon={<UserCheck size={20} />} 
+          text="Managers" 
+          to="/managers"
+          active={location.pathname === '/managers'} 
           collapsed={collapsed} 
         />
         <NavItem 

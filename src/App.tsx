@@ -16,6 +16,7 @@ import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RecruiterManagement from "./pages/RecruiterManagement";
+import ManagerManagement from "./pages/ManagerManagement";
 import PositionManagement from './pages/PositionManagement';
 import AdminPanel from './pages/AdminPanel';
 import Reports from './pages/Reports';
@@ -89,6 +90,11 @@ function App() {
             <Route path="/recruiters" element={
               <ProtectedRoute>
                 <RecruiterManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/managers" element={
+              <ProtectedRoute>
+                <ManagerManagement />
               </ProtectedRoute>
             } />
             <Route path="/candidates" element={
