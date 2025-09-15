@@ -53,7 +53,7 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
     const managers = new Set<string>();
     candidates.forEach(candidate => {
       if (candidate.manager && candidate.manager.trim() !== '') {
-        // Normalize the manager name: trim whitespace and handle case consistency
+        // Normalize the manager name: trim whitespace
         const normalizedManager = candidate.manager.trim();
         managers.add(normalizedManager);
       }

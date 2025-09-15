@@ -20,6 +20,71 @@ const fromIndiaTimezone = (isoString: string): Date => {
 };
 
 export const candidateService = {
+  // Clean up existing manager names in the database
+  async normalizeExistingManagers(): Promise<void> {
+    console.log('Starting manager name normalization...');
+    
+    try {
+      // Fetch all candidates with non-empty manager names
+      const { data: candidates, error: fetchError } = await supabase
+        .from('candidates')
+        .select('id, Manager')
+        .not('Manager', 'is', null)
+        .neq('Manager', '');
+
+      if (fetchError) {
+        throw new Error(`Failed to fetch candidates: ${fetchError.message}`);
+      }
+
+      if (!candidates || candidates.length === 0) {
+        console.log('No candidates with manager names found');
+        return;
+      }
+
+      console.log(`Found ${candidates.length} candidates with manager names`);
+
+      // Process candidates in batches to normalize manager names
+      const updates: Array<{ id: string; normalizedManager: string }> = [];
+      
+      for (const candidate of candidates) {
+        const originalManager = candidate.Manager || '';
+        const normalizedManager = originalManager.trim();
+        
+        // Only update if normalization changed the value
+        if (originalManager !== normalizedManager) {
+          updates.push({
+            id: candidate.id,
+            normalizedManager
+          });
+        }
+      }
+
+      if (updates.length === 0) {
+        console.log('No manager names need normalization');
+        return;
+      }
+
+      console.log(`Normalizing ${updates.length} manager names...`);
+
+      // Update candidates with normalized manager names
+      for (const update of updates) {
+        const { error: updateError } = await supabase
+          .from('candidates')
+          .update({ Manager: update.normalizedManager })
+          .eq('id', update.id);
+
+        if (updateError) {
+          console.error(`Failed to normalize manager for candidate ${update.id}:`, updateError);
+        }
+      }
+
+      console.log('Manager name normalization completed successfully');
+    } catch (error) {
+      console.error('Error during manager name normalization:', error);
+      throw error;
+    }
+  },
+
   async saveCandidate(candidate: Candidate, isUpdating: boolean = false): Promise<Candidate> {
     console.log('SAVE CANDIDATE DEBUG - Input candidate:', {
       id: candidate.id,
@@ -30,6 +95,9 @@ export const candidateService = {
       positionLength: candidate.position?.length
     });
 
+    // Normalize manager name - trim spaces and handle empty strings
+    const normalizedManager = candidate.manager ? candidate.manager.trim() : '';
+    
     // Ensure we have valid values for clientId
     const safeClientId = candidate.clientId && candidate.clientId.trim() !== '' ? candidate.clientId : null;
     
@@ -70,7 +138,7 @@ export const candidateService = {
         recruiter_name: candidate.recruiterName || '',
         date_informed: candidate.dateInformed ? toIndiaTimezone(candidate.dateInformed) : null,
         remarks: candidate.remarks || '',
-        Manager: candidate.manager || '', // FIXED: Ensure manager field is properly saved
+        Manager: normalizedManager, // FIXED: Save normalized manager name
         updated_at: currentTimestamp,
       };
 
@@ -136,7 +204,7 @@ export const candidateService = {
         recruiter_name: candidate.recruiterName || '',
         date_informed: candidate.dateInformed ? toIndiaTimezone(candidate.dateInformed) : null,
         remarks: candidate.remarks || '',
-        Manager: candidate.manager || '', // FIXED: Ensure manager field is properly saved
+        Manager: normalizedManager, // FIXED: Save normalized manager name
         created_at: currentTimestamp,
         updated_at: currentTimestamp,
       };

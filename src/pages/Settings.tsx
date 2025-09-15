@@ -6,6 +6,9 @@ import { toast } from '@/hooks/use-toast';
 import { useFilteredData, FilteredDataOptions } from '@/hooks/useFilteredData';
 import DataDisplaySettings from '@/components/settings/DataDisplaySettings';
 import ExportData from '@/components/settings/ExportData';
+import { candidateService } from '@/services/candidateService';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Settings = () => {
   const [timePeriod, setTimePeriod] = useState('30');
@@ -18,6 +21,7 @@ const Settings = () => {
   const [selectedMonthValue, setSelectedMonthValue] = useState<number | undefined>(undefined);
   const [selectedYearValue, setSelectedYearValue] = useState<number | undefined>(undefined);
   const [exportType, setExportType] = useState<'range' | 'month'>('month');
+  const [isNormalizing, setIsNormalizing] = useState(false);
   
   const { isLoading, data, fetchData, exportToExcel } = useFilteredData();
   
@@ -125,6 +129,29 @@ const Settings = () => {
     }
   };
 
+  const handleNormalizeManagers = async () => {
+    if (isNormalizing) return;
+    
+    setIsNormalizing(true);
+    try {
+      await candidateService.normalizeExistingManagers();
+      toast({
+        title: "Manager Names Normalized",
+        description: "All manager names have been cleaned up successfully. Extra spaces have been removed and duplicates consolidated.",
+        className: "bg-green-50 border-green-200 text-green-800",
+      });
+    } catch (error: any) {
+      console.error('Manager normalization failed:', error);
+      toast({
+        title: "Normalization Failed",
+        description: error.message || "Failed to normalize manager names. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsNormalizing(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="p-8 w-full bg-gray-50 min-h-[calc(100vh-64px)]">
@@ -164,6 +191,31 @@ const Settings = () => {
                 selectedYearValue={selectedYearValue}
                 setSelectedYearValue={setSelectedYearValue}
               />
+            </div>
+
+            <div className="w-full">
+              <h2 className="text-lg font-medium text-gray-700 mb-3">Data Management</h2>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Manager Name Normalization</CardTitle>
+                  <CardDescription>
+                    Clean up manager names by removing extra spaces and consolidating duplicates. 
+                    This will ensure "Kajal" and "Kajal " are treated as the same manager.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button 
+                    onClick={handleNormalizeManagers}
+                    disabled={isNormalizing}
+                    className="w-full sm:w-auto"
+                  >
+                    {isNormalizing ? 'Normalizing...' : 'Normalize Manager Names'}
+                  </Button>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    This action will clean up existing data and prevent future duplicates from being created.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

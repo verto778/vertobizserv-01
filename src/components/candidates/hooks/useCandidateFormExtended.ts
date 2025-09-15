@@ -173,9 +173,13 @@ export function useCandidateFormExtended({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
+    // Normalize manager names by trimming spaces for consistent data
+    const normalizedValue = name === 'manager' ? value.trim() : value;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: normalizedValue,
     }));
   };
 
