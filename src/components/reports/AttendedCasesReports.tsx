@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import AttendedCasesChart from './AttendedCasesChart';
 import { toast } from '@/hooks/use-toast';
 import { getMonth, getYear, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { Candidate } from '@/components/candidates/types';
+import { candidateService } from '@/services/candidateService';
 
 interface AttendedCasesData {
   month: string;
@@ -52,10 +53,39 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
   const [timeRange, setTimeRange] = useState('6'); // Default 6 months
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   
+  // Run manager normalization on component mount
+  useEffect(() => {
+    const normalizeManagersOnLoad = async () => {
+      try {
+        await candidateService.normalizeExistingManagers();
+        console.log('Manager names normalized successfully on reports load');
+      } catch (error) {
+        console.error('Failed to normalize manager names:', error);
+      }
+    };
+    
+    normalizeManagersOnLoad();
+  }, []);
+  
   const { candidates } = useCandidateManagement();
   const { clients } = useClientData();
   const { recruiters } = useRecruiters(true);
   const { exportToExcel } = useFilteredData();
+
+  // Generate unique managers from candidates data
+  const uniqueManagers = useMemo(() => {
+    const managerSet = new Set<string>();
+    candidates.forEach(candidate => {
+      const manager = (candidate.manager || '').trim();
+      if (manager && manager !== '') {
+        managerSet.add(manager);
+      }
+    });
+    
+    return Array.from(managerSet)
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+      .map((name, index) => ({ id: `manager-${index}`, name }));
+  }, [candidates]);
 
   // Use props if provided, otherwise use local state
   const finalSelectedClients = selectedClients.length > 0 ? selectedClients : localSelectedClients;
@@ -141,14 +171,46 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
       }
       
       // Filter by selected managers
-      if (finalSelectedManagers.length > 0 && !finalSelectedManagers.includes(candidate.manager || '')) {
-        return false;
+      if (finalSelectedManagers.length > 0) {
+        const candidateManager = (candidate.manager || '').trim();
+        const normalizedSelectedManagers = finalSelectedManagers.map(m => m.trim());
+        
+        if (!normalizedSelectedManagers.includes(candidateManager)) {
+          return false;
+        }
       }
       
       return true;
     });
 
-    console.log('After client/recruiter filter:', filteredCandidates.length);
+    console.log('DEBUG: Total candidates before filtering:', candidates.length);
+    console.log('DEBUG: Candidates with Attended status:', candidates.filter(c => c.status1 === 'Attended').length);
+    console.log('DEBUG: After date/client/recruiter filter:', filteredCandidates.length);
+    
+    // Debug manager data
+    const managerCounts = {};
+    filteredCandidates.forEach(candidate => {
+      const manager = (candidate.manager || '').trim();
+      const managerKey = manager || '[No Manager]';
+      managerCounts[managerKey] = (managerCounts[managerKey] || 0) + 1;
+    });
+    console.log('DEBUG: Manager distribution in filtered data:', managerCounts);
+    
+    if (finalSelectedManagers.length > 0) {
+      console.log('DEBUG: Selected managers for filtering:', finalSelectedManagers);
+      const afterManagerFilter = filteredCandidates.filter(candidate => {
+        const candidateManager = (candidate.manager || '').trim();
+        const normalizedSelectedManagers = finalSelectedManagers.map(m => m.trim());
+        return normalizedSelectedManagers.includes(candidateManager);
+      });
+      console.log('DEBUG: After manager filter applied:', afterManagerFilter.length);
+      console.log('DEBUG: Candidates by selected managers:', 
+        finalSelectedManagers.map(manager => ({
+          manager,
+          count: afterManagerFilter.filter(c => (c.manager || '').trim() === manager.trim()).length
+        }))
+      );
+    }
     console.log('Candidates with missing dateInformed:', filteredCandidates.filter(c => !c.dateInformed).length);
     console.log('Sample candidates with dates:', filteredCandidates.slice(0, 5).map(c => ({ name: c.name, dateInformed: c.dateInformed, status1: c.status1 })));
 
@@ -347,7 +409,7 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
               <ReportFilters
                 clients={clients}
                 recruiters={recruiters}
-                managers={managers}
+                managers={uniqueManagers}
                 selectedClients={localSelectedClients}
                 selectedRecruiters={localSelectedRecruiters}
                 selectedManagers={localSelectedManagers}
