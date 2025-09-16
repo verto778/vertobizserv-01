@@ -395,41 +395,42 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Show filters only if not controlled by parent */}
-      {selectedClients.length === 0 && selectedRecruiters.length === 0 && selectedManagers.length === 0 && !dateRange && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Report Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Always show filters for Attended Cases */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Report Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="md:col-span-2 lg:col-span-3">
               <ReportFilters
                 clients={clients}
                 recruiters={recruiters}
                 managers={uniqueManagers}
-                selectedClients={localSelectedClients}
-                selectedRecruiters={localSelectedRecruiters}
-                selectedManagers={localSelectedManagers}
+                selectedClients={finalSelectedClients}
+                selectedRecruiters={finalSelectedRecruiters}
+                selectedManagers={finalSelectedManagers}
                 onClientsChange={setLocalSelectedClients}
                 onRecruitersChange={setLocalSelectedRecruiters}
                 onManagersChange={setLocalSelectedManagers}
               />
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Time Range</label>
-                <Select value={timeRange} onValueChange={setTimeRange}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="3">Last 3 months</SelectItem>
-                    <SelectItem value="6">Last 6 months</SelectItem>
-                    <SelectItem value="12">Last 12 months</SelectItem>
-                    <SelectItem value="custom">Custom Date Range</SelectItem>
-                  </SelectContent>
-                </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Time Range</label>
+              <Select value={timeRange} onValueChange={setTimeRange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="3">Last 3 months</SelectItem>
+                  <SelectItem value="6">Last 6 months</SelectItem>
+                  <SelectItem value="12">Last 12 months</SelectItem>
+                  <SelectItem value="custom">Custom Date Range</SelectItem>
+                </SelectContent>
+              </Select>
                 
                 {timeRange === 'custom' && (
                   <div className="mt-2">
@@ -470,12 +471,11 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
                       </PopoverContent>
                     </Popover>
                   </div>
-                )}
-              </div>
+              )}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Charts Section */}
       <Tabs defaultValue="counts" className="w-full">
