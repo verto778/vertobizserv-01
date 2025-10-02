@@ -392,27 +392,27 @@ const InterviewConversionReport: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Main Content Tabs */}
-      <Tabs defaultValue="interview-cases" className="w-full">
+      <Tabs defaultValue="attended-cases" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="interview-cases" className="flex items-center gap-2">
+          <TabsTrigger value="attended-cases" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             Interview Cases
           </TabsTrigger>
-          <TabsTrigger value="attended-cases" className="flex items-center gap-2">
+          <TabsTrigger value="charts" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Attended Cases
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="interview-cases" className="space-y-6">
+        <TabsContent value="attended-cases" className="space-y-6">
+          <AttendedCasesReports />
+        </TabsContent>
+
+        <TabsContent value="charts" className="space-y-6">
           <InterviewConversionChart 
             data={status2OverviewData} 
             onExportExcel={handleStatus2ExportExcel}
           />
-        </TabsContent>
-
-        <TabsContent value="attended-cases" className="space-y-6">
-          <AttendedCasesReports />
         </TabsContent>
 
       </Tabs>
