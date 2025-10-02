@@ -393,87 +393,91 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
     exportToExcel(exportData, fileName);
   };
 
+  // Check if we're using parent filters (props provided) or local filters
+  const usingParentFilters = selectedClients.length > 0 || selectedRecruiters.length > 0 || selectedManagers.length > 0 || dateRange !== undefined;
+
   return (
     <div className="space-y-6">
-      {/* Report Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Report Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <ReportFilters
-              clients={clients}
-              recruiters={recruiters}
-              managers={uniqueManagers}
-              selectedClients={localSelectedClients}
-              selectedRecruiters={localSelectedRecruiters}
-              selectedManagers={localSelectedManagers}
-              onClientsChange={setLocalSelectedClients}
-              onRecruitersChange={setLocalSelectedRecruiters}
-              onManagersChange={setLocalSelectedManagers}
-            />
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Time Range</label>
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3">Last 3 months</SelectItem>
-                  <SelectItem value="6">Last 6 months</SelectItem>
-                  <SelectItem value="12">Last 12 months</SelectItem>
-                  <SelectItem value="custom">Custom Date Range</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              {timeRange === 'custom' && (
-                <div className="mt-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !customDateRange && "text-muted-foreground"
-                        )}
-                      >
-                        <Calendar className="mr-2 h-4 w-4" />
-                        {customDateRange?.from ? (
-                          customDateRange.to ? (
-                            <>
-                              {format(customDateRange.from, "MMM dd, yyyy")} - {format(customDateRange.to, "MMM dd, yyyy")}
-                            </>
+      {/* Report Filters - Only show if not using parent filters */}
+      {!usingParentFilters && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Report Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <ReportFilters
+                clients={clients}
+                recruiters={recruiters}
+                managers={uniqueManagers}
+                selectedClients={localSelectedClients}
+                selectedRecruiters={localSelectedRecruiters}
+                selectedManagers={localSelectedManagers}
+                onClientsChange={setLocalSelectedClients}
+                onRecruitersChange={setLocalSelectedRecruiters}
+                onManagersChange={setLocalSelectedManagers}
+              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Time Range</label>
+                <Select value={timeRange} onValueChange={setTimeRange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">Last 3 months</SelectItem>
+                    <SelectItem value="6">Last 6 months</SelectItem>
+                    <SelectItem value="12">Last 12 months</SelectItem>
+                    <SelectItem value="custom">Custom Date Range</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {timeRange === 'custom' && (
+                  <div className="mt-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !customDateRange && "text-muted-foreground"
+                          )}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {customDateRange?.from ? (
+                            customDateRange.to ? (
+                              <>
+                                {format(customDateRange.from, "LLL dd, y")} -{" "}
+                                {format(customDateRange.to, "LLL dd, y")}
+                              </>
+                            ) : (
+                              format(customDateRange.from, "LLL dd, y")
+                            )
                           ) : (
-                            format(customDateRange.from, "MMM dd, yyyy")
-                          )
-                        ) : (
-                          <span>Pick a date range</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <CalendarComponent
-                        initialFocus
-                        mode="range"
-                        defaultMonth={customDateRange?.from}
-                        selected={customDateRange}
-                        onSelect={setCustomDateRange}
-                        numberOfMonths={2}
-                        className="p-3 pointer-events-auto"
-                        disabled={(date) => date > new Date()}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              )}
+                            <span>Pick a date range</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          initialFocus
+                          mode="range"
+                          defaultMonth={customDateRange?.from}
+                          selected={customDateRange}
+                          onSelect={setCustomDateRange}
+                          numberOfMonths={2}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Section */}
       <Tabs defaultValue="counts" className="w-full">
