@@ -391,6 +391,81 @@ const InterviewConversionReport: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Report Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Report Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ReportFilters
+              clients={clients}
+              recruiters={recruiters}
+              managers={managers}
+              selectedClients={selectedClients}
+              selectedRecruiters={selectedRecruiters}
+              selectedManagers={selectedManagers}
+              onClientsChange={setSelectedClients}
+              onRecruitersChange={setSelectedRecruiters}
+              onManagersChange={setSelectedManagers}
+            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date Range</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateRange && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "MMM dd, yyyy")} - {format(dateRange.to, "MMM dd, yyyy")}
+                        </>
+                      ) : (
+                        format(dateRange.from, "MMM dd, yyyy")
+                      )
+                    ) : (
+                      <span>Pick a date range</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    initialFocus
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
+                    className="p-3 pointer-events-auto"
+                    disabled={(date) => date > new Date()}
+                  />
+                </PopoverContent>
+              </Popover>
+              {dateRange?.from && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDateReset}
+                  className="w-full"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Reset Date Range
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Main Content Tabs */}
       <Tabs defaultValue="attended-cases" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
