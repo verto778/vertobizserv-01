@@ -48,8 +48,9 @@ const InterviewConversionReport: React.FC = () => {
   const [selectedRecruiters, setSelectedRecruiters] = useState<string[]>([]);
   const [selectedManagers, setSelectedManagers] = useState<string[]>([]);
   
-  // Initialize with undefined for date range (no filtering applied initially)
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  // Time range state for Attended Cases tab
+  const [timeRange, setTimeRange] = useState('6'); // Default 6 months
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   
   const { candidates } = useCandidateManagement();
   const { clients } = useClientData();
@@ -108,6 +109,22 @@ const InterviewConversionReport: React.FC = () => {
 
   // Define status categories for the report
   const statusCategories = ['Attended', 'Rejected', 'SL -2nd Round+', 'Selected / Offered', 'Feedback Awaited', 'Others'];
+
+  // Calculate date range based on timeRange
+  const dateRange = useMemo(() => {
+    if (timeRange === 'custom') {
+      return customDateRange;
+    }
+    
+    const monthsBack = parseInt(timeRange);
+    const endDate = new Date();
+    const startDate = subMonths(endDate, monthsBack);
+    
+    return {
+      from: startDate,
+      to: endDate
+    };
+  }, [timeRange, customDateRange]);
 
   // Process candidates data for conversion analysis
   const conversionData = useMemo((): ConversionDataItem[] => {
@@ -315,12 +332,13 @@ const InterviewConversionReport: React.FC = () => {
     });
   }, [conversionData]);
 
-  // Handle date range reset
-  const handleDateReset = () => {
-    setDateRange(undefined);
+  // Handle time range reset
+  const handleTimeRangeReset = () => {
+    setTimeRange('6');
+    setCustomDateRange(undefined);
     toast({
-      title: "Date range reset",
-      description: "Date range has been cleared. Showing all data.",
+      title: "Time range reset",
+      description: "Time range has been reset to last 6 months.",
     });
   };
 
@@ -409,7 +427,6 @@ const InterviewConversionReport: React.FC = () => {
             selectedClients={selectedClients}
             selectedRecruiters={selectedRecruiters}
             selectedManagers={selectedManagers}
-            dateRange={dateRange}
             managers={managers}
           />
         </TabsContent>
@@ -421,62 +438,81 @@ const InterviewConversionReport: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Filters</CardTitle>
-                  <CardDescription>Filter attended cases by client, recruiter, manager, and date range</CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="gap-2">
-                        <Calendar className="h-4 w-4" />
-                        {dateRange?.from ? (
-                          dateRange.to ? (
-                            <>
-                              {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
-                            </>
-                          ) : (
-                            format(dateRange.from, "LLL dd, y")
-                          )
-                        ) : (
-                          "Pick date range"
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="end">
-                      <CalendarComponent
-                        initialFocus
-                        mode="range"
-                        defaultMonth={dateRange?.from}
-                        selected={dateRange}
-                        onSelect={setDateRange}
-                        numberOfMonths={2}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {dateRange?.from && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleDateReset}
-                      title="Reset date range"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <CardDescription>Filter attended cases by client, recruiter, manager, and time range</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <ReportFilters
-                clients={clients}
-                recruiters={recruiters}
-                managers={managers}
-                selectedClients={selectedClients}
-                selectedRecruiters={selectedRecruiters}
-                selectedManagers={selectedManagers}
-                onClientsChange={setSelectedClients}
-                onRecruitersChange={setSelectedRecruiters}
-                onManagersChange={setSelectedManagers}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <ReportFilters
+                    clients={clients}
+                    recruiters={recruiters}
+                    managers={managers}
+                    selectedClients={selectedClients}
+                    selectedRecruiters={selectedRecruiters}
+                    selectedManagers={selectedManagers}
+                    onClientsChange={setSelectedClients}
+                    onRecruitersChange={setSelectedRecruiters}
+                    onManagersChange={setSelectedManagers}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Time Range</label>
+                  <Select value={timeRange} onValueChange={setTimeRange}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3">Last 3 months</SelectItem>
+                      <SelectItem value="6">Last 6 months</SelectItem>
+                      <SelectItem value="12">Last 12 months</SelectItem>
+                      <SelectItem value="custom">Custom Date Range</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {timeRange === 'custom' && (
+                    <div className="mt-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !customDateRange && "text-muted-foreground"
+                            )}
+                          >
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {customDateRange?.from ? (
+                              customDateRange.to ? (
+                                <>
+                                  {format(customDateRange.from, "MMM dd, yyyy")} - {format(customDateRange.to, "MMM dd, yyyy")}
+                                </>
+                              ) : (
+                                format(customDateRange.from, "MMM dd, yyyy")
+                              )
+                            ) : (
+                              <span>Pick a date range</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            initialFocus
+                            mode="range"
+                            defaultMonth={customDateRange?.from}
+                            selected={customDateRange}
+                            onSelect={setCustomDateRange}
+                            numberOfMonths={2}
+                            className="p-3 pointer-events-auto"
+                            disabled={(date) => date > new Date()}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
 
