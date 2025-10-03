@@ -405,6 +405,71 @@ const InterviewConversionReport: React.FC = () => {
         </TabsList>
 
         <TabsContent value="attended-cases" className="space-y-6">
+          {/* Filters Section */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Filters</CardTitle>
+                  <CardDescription>Filter interview cases by client, recruiter, manager, and date range</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="gap-2">
+                        <Calendar className="h-4 w-4" />
+                        {dateRange?.from ? (
+                          dateRange.to ? (
+                            <>
+                              {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                            </>
+                          ) : (
+                            format(dateRange.from, "LLL dd, y")
+                          )
+                        ) : (
+                          "Pick date range"
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <CalendarComponent
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={setDateRange}
+                        numberOfMonths={2}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {dateRange?.from && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleDateReset}
+                      title="Reset date range"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ReportFilters
+                clients={clients}
+                recruiters={recruiters}
+                managers={managers}
+                selectedClients={selectedClients}
+                selectedRecruiters={selectedRecruiters}
+                selectedManagers={selectedManagers}
+                onClientsChange={setSelectedClients}
+                onRecruitersChange={setSelectedRecruiters}
+                onManagersChange={setSelectedManagers}
+              />
+            </CardContent>
+          </Card>
+
           <AttendedCasesReports 
             selectedClients={selectedClients}
             selectedRecruiters={selectedRecruiters}
@@ -415,6 +480,71 @@ const InterviewConversionReport: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="charts" className="space-y-6">
+          {/* Filters Section */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Filters</CardTitle>
+                  <CardDescription>Filter attended cases by client, recruiter, manager, and date range</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="gap-2">
+                        <Calendar className="h-4 w-4" />
+                        {dateRange?.from ? (
+                          dateRange.to ? (
+                            <>
+                              {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                            </>
+                          ) : (
+                            format(dateRange.from, "LLL dd, y")
+                          )
+                        ) : (
+                          "Pick date range"
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <CalendarComponent
+                        initialFocus
+                        mode="range"
+                        defaultMonth={dateRange?.from}
+                        selected={dateRange}
+                        onSelect={setDateRange}
+                        numberOfMonths={2}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {dateRange?.from && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleDateReset}
+                      title="Reset date range"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ReportFilters
+                clients={clients}
+                recruiters={recruiters}
+                managers={managers}
+                selectedClients={selectedClients}
+                selectedRecruiters={selectedRecruiters}
+                selectedManagers={selectedManagers}
+                onClientsChange={setSelectedClients}
+                onRecruitersChange={setSelectedRecruiters}
+                onManagersChange={setSelectedManagers}
+              />
+            </CardContent>
+          </Card>
+
           <InterviewConversionChart 
             data={status2OverviewData} 
             onExportExcel={handleStatus2ExportExcel}
