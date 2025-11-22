@@ -7,29 +7,42 @@ import { startOfToday, endOfToday } from 'date-fns';
 const timeToMinutes = (timeStr: string): number | null => {
   if (!timeStr || timeStr === 'N/A') return null;
   
-  // If already in 24-hour format (HH:MM)
-  if (timeStr.includes(':')) {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    if (isNaN(hours) || isNaN(minutes)) return null;
+  const cleanTime = timeStr.trim();
+  
+  // If already in 24-hour format (HH:MM or H:MM)
+  if (cleanTime.includes(':')) {
+    const parts = cleanTime.split(':');
+    const hours = parseInt(parts[0]);
+    const minutes = parseInt(parts[1]);
+    if (isNaN(hours) || isNaN(minutes)) {
+      console.log('[Notification] Invalid time format:', timeStr);
+      return null;
+    }
     return hours * 60 + minutes;
   }
   
-  // Handle AM/PM format
-  const lowerTime = timeStr.toLowerCase().trim();
-  let hour = parseInt(lowerTime);
-  const isAM = lowerTime.includes('am');
-  const isPM = lowerTime.includes('pm');
+  // Handle AM/PM format (e.g., "3 PM", "11 AM", "3PM", "11AM")
+  const lowerTime = cleanTime.toLowerCase();
+  const timeMatch = lowerTime.match(/(\d+)\s*(am|pm)/);
   
-  if (isNaN(hour)) return null;
-  
-  // Convert to 24-hour format
-  if (isPM && hour !== 12) {
-    hour += 12;
-  } else if (isAM && hour === 12) {
-    hour = 0;
+  if (timeMatch) {
+    let hour = parseInt(timeMatch[1]);
+    const isPM = timeMatch[2] === 'pm';
+    
+    if (isNaN(hour)) return null;
+    
+    // Convert to 24-hour format
+    if (isPM && hour !== 12) {
+      hour += 12;
+    } else if (!isPM && hour === 12) {
+      hour = 0;
+    }
+    
+    return hour * 60;
   }
   
-  return hour * 60;
+  console.log('[Notification] Could not parse time format:', timeStr);
+  return null;
 };
 
 // Play notification sound
@@ -124,12 +137,12 @@ export const useInterviewNotifications = () => {
             // Calculate time difference in minutes
             const timeDiff = interviewMinutes - currentMinutes;
             
-            // Notify if interview is within 10 minutes and hasn't been notified yet
+            // Notify if interview is between 9 and 10 minutes away (to catch the window reliably)
             const notificationKey = `${candidate.id}-${candidate.interview_time}-${startOfToday().toISOString()}`;
             
-            console.log(`[Notification] Candidate: ${candidate.name}, Time: ${candidate.interview_time}, Diff: ${timeDiff} min`);
+            console.log(`[Notification] Candidate: ${candidate.name}, Time: ${candidate.interview_time}, Interview Minutes: ${interviewMinutes}, Current Minutes: ${currentMinutes}, Diff: ${timeDiff} min, Already Notified: ${notifiedInterviewsRef.current.has(notificationKey)}`);
             
-            if (timeDiff > 0 && timeDiff <= 10 && !notifiedInterviewsRef.current.has(notificationKey)) {
+            if (timeDiff >= 9 && timeDiff <= 10 && !notifiedInterviewsRef.current.has(notificationKey)) {
               notifiedInterviewsRef.current.add(notificationKey);
               notificationCount++;
               
@@ -197,11 +210,11 @@ export const useInterviewNotifications = () => {
     }
 
     // Check immediately
-    console.log('[Notification] System initialized');
+    console.log('[Notification] System initialized - checking every 30 seconds');
     checkUpcomingInterviews();
 
-    // Check every minute
-    const interval = setInterval(checkUpcomingInterviews, 60000);
+    // Check every 30 seconds for more reliable notifications
+    const interval = setInterval(checkUpcomingInterviews, 30000);
 
     // Cleanup old notifications daily (at midnight)
     const cleanupInterval = setInterval(() => {

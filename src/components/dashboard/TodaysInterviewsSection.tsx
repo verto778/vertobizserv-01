@@ -14,11 +14,32 @@ const TodaysInterviewsSection: React.FC = () => {
     }
   }, []);
 
+  // Helper to check if interview is within notification window
+  const isWithinNotificationWindow = (timeStr: string): boolean => {
+    if (!timeStr || timeStr === 'N/A') return false;
+    
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    // Parse time
+    let interviewMinutes = 0;
+    if (timeStr.includes(':')) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      interviewMinutes = hours * 60 + minutes;
+    }
+    
+    const timeDiff = interviewMinutes - currentMinutes;
+    return timeDiff >= 0 && timeDiff <= 15; // Within 15 minutes
+  };
+
   return (
     <div ref={todaysInterviewsRef} className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 opacity-0">
       <h2 className="text-lg font-medium mb-6 text-[#0a1a35] flex items-center">
         <CalendarClock className="h-5 w-5 mr-2 text-blue-600" />
         Today's Interviews
+        {todaysInterviews.length > 0 && (
+          <span className="ml-2 text-sm text-gray-500">({todaysInterviews.length} scheduled)</span>
+        )}
       </h2>
       <div className="overflow-x-auto">
         {interviewsLoading ? (
@@ -42,27 +63,35 @@ const TodaysInterviewsSection: React.FC = () => {
             </TableHeader>
             <TableBody>
               {todaysInterviews.length > 0 ? (
-                todaysInterviews.map((interview, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{interview.candidate}</TableCell>
-                    <TableCell>{interview.mobile}</TableCell>
-                    <TableCell>{interview.client}</TableCell>
-                    <TableCell>{interview.position}</TableCell>
-                    <TableCell>{interview.recruiter}</TableCell>
-                    <TableCell>{interview.manager}</TableCell>
-                    <TableCell>{interview.time}</TableCell>
-                    <TableCell>{interview.mode}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        interview.status1 === 'Confirmed' ? 'bg-green-100 text-green-800' : 
-                        interview.status1 === 'Yet to Confirm' ? 'bg-yellow-100 text-yellow-800' : 
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {interview.status1}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))
+                todaysInterviews.map((interview, index) => {
+                  const isUpcoming = isWithinNotificationWindow(interview.time);
+                  return (
+                    <TableRow key={index} className={isUpcoming ? 'bg-orange-50 border-l-4 border-l-orange-500' : ''}>
+                      <TableCell className="font-medium">
+                        {interview.candidate}
+                        {isUpcoming && <span className="ml-2 text-xs text-orange-600 font-semibold">🔔 SOON</span>}
+                      </TableCell>
+                      <TableCell>{interview.mobile}</TableCell>
+                      <TableCell>{interview.client}</TableCell>
+                      <TableCell>{interview.position}</TableCell>
+                      <TableCell>{interview.recruiter}</TableCell>
+                      <TableCell>{interview.manager}</TableCell>
+                      <TableCell className={isUpcoming ? 'font-bold text-orange-600' : ''}>
+                        {interview.time}
+                      </TableCell>
+                      <TableCell>{interview.mode}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          interview.status1 === 'Confirmed' ? 'bg-green-100 text-green-800' : 
+                          interview.status1 === 'Yet to Confirm' ? 'bg-yellow-100 text-yellow-800' : 
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {interview.status1}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center text-gray-500 py-4">
