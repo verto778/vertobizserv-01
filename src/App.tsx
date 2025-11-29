@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
+import { useInterviewNotifications } from "@/hooks/useInterviewNotifications";
 import Index from "./pages/Index";
 import ClientManagement from "./pages/ClientManagement";
 import { Candidates } from "./pages/Candidates";
@@ -26,6 +27,9 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Enable interview notifications globally for authenticated users
+  useInterviewNotifications();
 
   useEffect(() => {
     // Set up auth state listener
