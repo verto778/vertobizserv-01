@@ -90,11 +90,14 @@ const playNotificationSound = () => {
   }
 };
 
-export const useInterviewNotifications = () => {
+export const useInterviewNotifications = (enabled: boolean = true) => {
   const notifiedInterviewsRef = useRef<Set<string>>(new Set());
   const lastCheckRef = useRef<Date | null>(null);
+  const networkErrorLoggedRef = useRef(false);
 
   useEffect(() => {
+    if (!enabled) return;
+
     const checkUpcomingInterviews = async () => {
       try {
         const now = new Date();
@@ -117,8 +120,9 @@ export const useInterviewNotifications = () => {
           throw error;
         }
         
+        networkErrorLoggedRef.current = false;
+
         if (data) {
-          console.log(`[Notification] Found ${data.length} interviews today`);
           
           let notificationCount = 0;
           
@@ -190,8 +194,26 @@ export const useInterviewNotifications = () => {
         }
         
         lastCheckRef.current = now;
-      } catch (error) {
+      } catch (error: any) {
         console.error('[Notification] Error checking upcoming interviews:', error);
+
+        const isNetworkError =
+          error?.message?.includes('Failed to fetch') ||
+          error?.details?.includes('Failed to fetch');
+
+        if (isNetworkError) {
+          if (!networkErrorLoggedRef.current) {
+            networkErrorLoggedRef.current = true;
+            toast({
+              title: "Notification paused",
+              description: "Can't reach server right now. Notifications will auto-resume once connection is back.",
+              variant: "destructive",
+              duration: 4000
+            });
+          }
+          return;
+        }
+
         toast({
           title: "Notification System Error",
           description: "Failed to check for upcoming interviews. Please refresh the page.",
