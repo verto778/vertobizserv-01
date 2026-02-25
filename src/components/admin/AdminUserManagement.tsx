@@ -51,8 +51,10 @@ const AdminUserManagement = () => {
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      console.log('Loading users...');
-      const { data, error } = await supabase.functions.invoke('admin-list-users');
+      // Edge function disabled temporarily
+      // const { data, error } = await supabase.functions.invoke('admin-list-users');
+      const data = { users: [], total_count: 0 };
+      const error = null;
       
       if (error) {
         console.error('Error from admin-list-users:', error);
@@ -131,12 +133,12 @@ const AdminUserManagement = () => {
     
     try {
       console.log('Resetting password for:', selectedUserEmail);
-      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
-        body: {
-          targetUserEmail: selectedUserEmail,
-          newPassword: newPassword
-        }
-      });
+      // Edge function disabled temporarily
+      // const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+      //   body: { targetUserEmail: selectedUserEmail, newPassword: newPassword }
+      // });
+      const data = null;
+      const error = new Error('Edge functions are temporarily disabled');
       
       if (error) {
         console.error('Password reset error:', error);
@@ -234,12 +236,12 @@ const AdminUserManagement = () => {
     
     try {
       console.log('Creating new user:', newUserEmail);
-      const { data, error } = await supabase.functions.invoke('admin-create-user', {
-        body: {
-          email: newUserEmail,
-          password: newUserPassword
-        }
-      });
+      // Edge function disabled temporarily
+      // const { data, error } = await supabase.functions.invoke('admin-create-user', {
+      //   body: { email: newUserEmail, password: newUserPassword }
+      // });
+      const data = null;
+      const error = new Error('Edge functions are temporarily disabled');
       
       if (error) {
         console.error('User creation error:', error);

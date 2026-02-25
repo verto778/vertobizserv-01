@@ -43,10 +43,12 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
     try {
       console.log('Checking if user exists:', email);
       
-      // Call the edge function directly instead of RPC
-      const { data, error } = await supabase.functions.invoke('check-user-exists-rpc', {
-        body: { user_email: email }
-      });
+      // Edge function disabled temporarily
+      // const { data, error } = await supabase.functions.invoke('check-user-exists-rpc', {
+      //   body: { user_email: email }
+      // });
+      const data = null;
+      const error = null;
 
       if (error) {
         console.error('Function error:', error);
@@ -164,13 +166,12 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({
     try {
       console.log('Updating password for user:', email);
       
-      // Call the edge function directly instead of RPC
-      const { data, error } = await supabase.functions.invoke('admin-update-password-rpc', {
-        body: { 
-          target_email: email,
-          new_password: newPassword
-        }
-      });
+      // Edge function disabled temporarily
+      // const { data, error } = await supabase.functions.invoke('admin-update-password-rpc', {
+      //   body: { target_email: email, new_password: newPassword }
+      // });
+      const data = null;
+      const error = new Error('Edge functions are temporarily disabled');
 
       if (error) {
         throw error;
