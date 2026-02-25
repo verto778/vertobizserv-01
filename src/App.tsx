@@ -29,7 +29,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Enable interview notifications globally for authenticated users
-  useInterviewNotifications();
+  useInterviewNotifications(Boolean(user));
 
   useEffect(() => {
     // Set up auth state listener
