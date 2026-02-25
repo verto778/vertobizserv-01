@@ -30,34 +30,24 @@ const SuperAdminRoute = ({ children }: SuperAdminRouteProps) => {
         console.log('User metadata:', session.user.user_metadata);
         console.log('Calling check-super-admin function...');
 
-        // Call our Edge Function to check super admin status
-        const { data, error } = await supabase.functions.invoke('check-super-admin');
+        // Edge function disabled temporarily to avoid unhealthy project status
+        // const { data, error } = await supabase.functions.invoke('check-super-admin');
         
-        console.log('Edge function response:', { data, error });
-        
-        if (error) {
-          console.error('Error checking super admin status:', error);
+        // Fallback: check user metadata/email for super admin
+        const email = session.user.email;
+        const isSA = email === 'superadmin@vertobizserv.com' || session.user.user_metadata?.role === 'super_admin';
+        setIsSuperAdmin(isSA);
+        if (!isSA) {
           toast({
-            title: "Access Check Failed",
-            description: `Could not verify admin permissions: ${error.message}`,
+            title: "Access Denied",
+            description: `Super Admin privileges required. Current email: ${email}`,
             variant: "destructive"
           });
-          setIsSuperAdmin(false);
         } else {
-          console.log('Super admin check result:', data);
-          setIsSuperAdmin(data.isSuperAdmin);
-          if (!data.isSuperAdmin) {
-            toast({
-              title: "Access Denied",
-              description: `Super Admin privileges required. Current email: ${session.user.email}, Role: ${data.currentRole || 'user'}`,
-              variant: "destructive"
-            });
-          } else {
-            toast({
-              title: "Super Admin Access Granted",
-              description: `Welcome to the admin panel! Role: ${data.currentRole}`,
-            });
-          }
+          toast({
+            title: "Super Admin Access Granted",
+            description: `Welcome to the admin panel!`,
+          });
         }
       } catch (error: any) {
         console.error('Super admin check error:', error);

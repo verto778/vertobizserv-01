@@ -16,13 +16,18 @@ export const useSuperAdmin = () => {
           return;
         }
 
-        const { data, error } = await supabase.functions.invoke('check-super-admin');
+        // Edge function disabled temporarily to avoid unhealthy project status
+        // const { data, error } = await supabase.functions.invoke('check-super-admin');
+        // if (!error && data?.isSuperAdmin) {
+        //   setIsSuperAdmin(true);
+        // } else {
+        //   setIsSuperAdmin(false);
+        // }
         
-        if (!error && data?.isSuperAdmin) {
-          setIsSuperAdmin(true);
-        } else {
-          setIsSuperAdmin(false);
-        }
+        // Fallback: check user metadata for super admin
+        const email = session.user.email;
+        const isSA = email === 'superadmin@vertobizserv.com' || session.user.user_metadata?.role === 'super_admin';
+        setIsSuperAdmin(isSA);
       } catch (error) {
         console.log('Error checking super admin status:', error);
         setIsSuperAdmin(false);

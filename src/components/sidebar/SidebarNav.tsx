@@ -35,10 +35,12 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ collapsed, onLogoutClick }) => 
           return;
         }
 
-        const { data, error } = await supabase.functions.invoke('check-super-admin');
-        if (!error && data?.isSuperAdmin) {
-          setIsSuperAdmin(true);
-        }
+        // Edge function disabled temporarily
+        // const { data, error } = await supabase.functions.invoke('check-super-admin');
+        // if (!error && data?.isSuperAdmin) { setIsSuperAdmin(true); }
+        const email = session.user.email;
+        const isSA = email === 'superadmin@vertobizserv.com' || session.user.user_metadata?.role === 'super_admin';
+        setIsSuperAdmin(isSA);
       } catch (error) {
         console.log('Error checking super admin status:', error);
         setIsSuperAdmin(false);
