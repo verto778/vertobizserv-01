@@ -259,7 +259,8 @@ export const candidateService = {
     let query = supabase
       .from('candidates')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(10000);
   
     if (searchTerm) {
       query = query.ilike('name', `%${searchTerm}%`);
