@@ -221,7 +221,7 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
       if (dateRange?.from && dateRange?.to) {
         // If parent date range is provided, filter by the parent date range
         monthCandidates = filteredCandidates.filter(candidate => {
-          const candidateDate = candidate.dateInformed;
+        const candidateDate = candidate.interviewDate;
           if (!candidateDate) return false;
           
           const candidateDateObj = new Date(candidateDate);
@@ -230,7 +230,7 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
       } else {
         // Otherwise, filter by month
         monthCandidates = filteredCandidates.filter(candidate => {
-          const candidateDate = candidate.dateInformed;
+          const candidateDate = candidate.interviewDate;
           if (!candidateDate) return false;
           
           const candidateDateObj = new Date(candidateDate);
