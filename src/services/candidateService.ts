@@ -256,25 +256,42 @@ export const candidateService = {
   },
 
   async fetchCandidates(searchTerm: string): Promise<Candidate[]> {
-    let query = supabase
-      .from('candidates')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(10000);
-  
-    if (searchTerm) {
-      query = query.ilike('name', `%${searchTerm}%`);
+    // Fetch ALL candidates using pagination to bypass Supabase's 1000-row default limit
+    const PAGE_SIZE = 1000;
+    let allData: any[] = [];
+    let from = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      let query = supabase
+        .from('candidates')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching candidates:', error);
+        throw new Error(`Failed to fetch candidates: ${error.message}`);
+      }
+
+      if (data && data.length > 0) {
+        allData = allData.concat(data);
+        from += PAGE_SIZE;
+        hasMore = data.length === PAGE_SIZE;
+      } else {
+        hasMore = false;
+      }
     }
-  
-    const { data, error } = await query;
-  
-    if (error) {
-      console.error('Error fetching candidates:', error);
-      throw new Error(`Failed to fetch candidates: ${error.message}`);
-    }
-  
-    // FIXED: Map Supabase data to the Candidate type with proper manager field mapping
-    const candidates: Candidate[] = data.map(candidate => ({
+
+    console.log('FETCH CANDIDATES DEBUG - Total fetched (all pages):', allData.length);
+
+    const candidates: Candidate[] = allData.map(candidate => ({
       id: candidate.id,
       name: candidate.name,
       contactNumber: candidate.contact_number,
@@ -291,16 +308,13 @@ export const candidateService = {
       recruiterName: candidate.recruiter_name,
       dateInformed: candidate.date_informed ? fromIndiaTimezone(candidate.date_informed) : null,
       remarks: candidate.remarks || '',
-      manager: candidate.Manager || '', // FIXED: Properly map Manager field from database
+      manager: candidate.Manager || '',
     }));
-  
-    console.log('FETCH CANDIDATES DEBUG - Sample candidate with manager:', {
-      totalCount: candidates.length,
-      firstCandidateManager: candidates[0]?.manager
-    });
-  
+
+    console.log('FETCH CANDIDATES DEBUG - Total candidates mapped:', candidates.length);
+
     return candidates;
-  },  
+  },
 
   async deleteCandidate(candidateId: string): Promise<void> {
     console.log('candidateService.deleteCandidate called with:', candidateId, 'type:', typeof candidateId);
