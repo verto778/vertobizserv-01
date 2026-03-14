@@ -221,20 +221,19 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
       if (dateRange?.from && dateRange?.to) {
         // If parent date range is provided, filter by the parent date range
         monthCandidates = filteredCandidates.filter(candidate => {
-        const candidateDate = candidate.interviewDate;
+          const candidateDate = candidate.interviewDate;
           if (!candidateDate) return false;
-          
-          const candidateDateObj = new Date(candidateDate);
-          return candidateDateObj >= dateRange.from! && candidateDateObj <= dateRange.to!;
+          return candidateDate >= dateRange.from! && candidateDate <= dateRange.to!;
         });
       } else {
-        // Otherwise, filter by month
+        // Filter by year and month numbers to avoid timezone boundary issues
         monthCandidates = filteredCandidates.filter(candidate => {
           const candidateDate = candidate.interviewDate;
           if (!candidateDate) return false;
           
-          const candidateDateObj = new Date(candidateDate);
-          return candidateDateObj >= monthInfo.startDate && candidateDateObj <= monthInfo.endDate;
+          const candidateYear = candidateDate.getFullYear();
+          const candidateMonth = candidateDate.getMonth() + 1;
+          return candidateYear === monthInfo.year && candidateMonth === monthInfo.month;
         });
       }
 

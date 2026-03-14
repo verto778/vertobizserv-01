@@ -238,8 +238,7 @@ const InterviewConversionReport: React.FC = () => {
       filteredCandidates = filteredCandidates.filter(candidate => {
         const candidateDate = candidate.interviewDate;
         if (!candidateDate) return false;
-        const candidateDateObj = new Date(candidateDate);
-        return candidateDateObj >= dateRange.from! && candidateDateObj <= dateRange.to!;
+        return candidateDate >= dateRange.from! && candidateDate <= dateRange.to!;
       });
     }
 
@@ -250,12 +249,13 @@ const InterviewConversionReport: React.FC = () => {
         // If date range is provided, use all filtered candidates
         monthCandidates = filteredCandidates;
       } else {
-        // Otherwise, filter by month
+        // Filter by year and month numbers to avoid timezone boundary issues
         monthCandidates = filteredCandidates.filter(candidate => {
           const candidateDate = candidate.interviewDate;
           if (!candidateDate) return false;
-          const candidateDateObj = new Date(candidateDate);
-          return candidateDateObj >= monthInfo.startDate && candidateDateObj <= monthInfo.endDate;
+          const candidateYear = candidateDate.getFullYear();
+          const candidateMonth = candidateDate.getMonth() + 1;
+          return candidateYear === monthInfo.year && candidateMonth === monthInfo.month;
         });
       }
 

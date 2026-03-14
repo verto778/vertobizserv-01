@@ -13,10 +13,12 @@ const toIndiaTimezone = (date: Date): string => {
   return formatInTimeZone(indiaDate, INDIA_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 };
 
-// Convert ISO string from database to India timezone Date object
+// Convert ISO string from database to Date object
+// The DB stores dates with IST offset (e.g., +05:30), so new Date() parses correctly.
+// DO NOT use toZonedTime here - it creates a "fake" Date with IST in UTC slots,
+// which causes double-conversion when the browser is also in IST, shifting dates across months.
 const fromIndiaTimezone = (isoString: string): Date => {
-  // Parse the date and ensure it's treated as India timezone
-  return toZonedTime(new Date(isoString), INDIA_TIMEZONE);
+  return new Date(isoString);
 };
 
 export const candidateService = {
