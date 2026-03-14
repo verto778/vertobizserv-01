@@ -152,21 +152,18 @@ const InterviewConversionReport: React.FC = () => {
       filteredCandidates = filteredCandidates.filter(candidate => {
         const candidateDate = candidate.interviewDate;
         if (!candidateDate) return false;
-        
-        const candidateDateObj = new Date(candidateDate);
-        return candidateDateObj >= dateRange.from! && candidateDateObj <= dateRange.to!;
+        return candidateDate >= dateRange.from! && candidateDate <= dateRange.to!;
       });
     }
 
-    // Group candidates by month
+    // Group candidates by month using year/month numbers to avoid timezone issues
     const monthlyGroups: { [key: string]: Candidate[] } = {};
     
     filteredCandidates.forEach(candidate => {
       const candidateDate = candidate.interviewDate;
       if (!candidateDate) return;
       
-      const date = new Date(candidateDate);
-      const monthKey = `${getYear(date)}-${getMonth(date) + 1}`;
+      const monthKey = `${candidateDate.getFullYear()}-${candidateDate.getMonth() + 1}`;
       
       if (!monthlyGroups[monthKey]) {
         monthlyGroups[monthKey] = [];
