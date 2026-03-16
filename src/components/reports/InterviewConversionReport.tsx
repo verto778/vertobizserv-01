@@ -61,11 +61,15 @@ const InterviewConversionReport: React.FC = () => {
   const managers = useMemo(() => {
     const uniqueManagers = new Set<string>();
     candidates.forEach(candidate => {
-      if (candidate.manager && candidate.manager.trim() !== '') {
-        uniqueManagers.add(candidate.manager);
+      const managerName = (candidate.manager || '').trim();
+      if (managerName) {
+        uniqueManagers.add(managerName);
       }
     });
-    return Array.from(uniqueManagers).map(name => ({ id: name, name }));
+
+    return Array.from(uniqueManagers)
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+      .map(name => ({ id: name, name }));
   }, [candidates]);
 
   // Custom status checking functions based on user requirements
