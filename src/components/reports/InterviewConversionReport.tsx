@@ -234,8 +234,11 @@ const InterviewConversionReport: React.FC = () => {
       if (selectedRecruiters.length > 0 && !selectedRecruiters.includes(candidate.recruiterName)) {
         return false;
       }
-      if (selectedManagers.length > 0 && !selectedManagers.includes(candidate.manager || '')) {
-        return false;
+      if (selectedManagers.length > 0) {
+        const candidateManager = (candidate.manager || '').trim();
+        if (!selectedManagers.includes(candidateManager)) {
+          return false;
+        }
       }
       return true;
     });
