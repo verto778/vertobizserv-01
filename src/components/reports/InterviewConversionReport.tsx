@@ -202,10 +202,11 @@ const InterviewConversionReport: React.FC = () => {
       };
     });
 
-    // Sort by year and month
+    // Sort by year and month (chronological, not alphabetical)
+    const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return monthlyData.sort((a, b) => {
       if (a.year !== b.year) return a.year - b.year;
-      return a.month.localeCompare(b.month);
+      return monthOrder.indexOf(a.month.slice(0, 3)) - monthOrder.indexOf(b.month.slice(0, 3));
     });
   }, [candidates, selectedClients, selectedRecruiters, selectedManagers, dateRange]);
 
