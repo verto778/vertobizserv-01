@@ -97,9 +97,11 @@ export const candidateService = {
       positionLength: candidate.position?.length
     });
 
-    // Normalize manager name - trim spaces and handle empty strings
+    // Normalize string fields to avoid reporting mismatches from trailing spaces/case variants
     const normalizedManager = candidate.manager ? candidate.manager.trim() : '';
-    
+    const normalizedStatus1 = candidate.status1 ? candidate.status1.trim() : '';
+    const normalizedStatus2 = candidate.status2 ? candidate.status2.trim() : '';
+
     // Ensure we have valid values for clientId
     const safeClientId = candidate.clientId && candidate.clientId.trim() !== '' ? candidate.clientId : null;
     
