@@ -61,11 +61,15 @@ const InterviewConversionReport: React.FC = () => {
   const managers = useMemo(() => {
     const uniqueManagers = new Set<string>();
     candidates.forEach(candidate => {
-      if (candidate.manager && candidate.manager.trim() !== '') {
-        uniqueManagers.add(candidate.manager);
+      const managerName = (candidate.manager || '').trim();
+      if (managerName) {
+        uniqueManagers.add(managerName);
       }
     });
-    return Array.from(uniqueManagers).map(name => ({ id: name, name }));
+
+    return Array.from(uniqueManagers)
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+      .map(name => ({ id: name, name }));
   }, [candidates]);
 
   // Custom status checking functions based on user requirements
@@ -140,8 +144,11 @@ const InterviewConversionReport: React.FC = () => {
       }
       
       // Filter by selected managers
-      if (selectedManagers.length > 0 && !selectedManagers.includes(candidate.manager || '')) {
-        return false;
+      if (selectedManagers.length > 0) {
+        const candidateManager = (candidate.manager || '').trim();
+        if (!selectedManagers.includes(candidateManager)) {
+          return false;
+        }
       }
       
       return true;
@@ -195,28 +202,42 @@ const InterviewConversionReport: React.FC = () => {
       };
     });
 
-    // Sort by year and month
+    // Sort by year and month (chronological, not alphabetical)
+    const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return monthlyData.sort((a, b) => {
       if (a.year !== b.year) return a.year - b.year;
-      return a.month.localeCompare(b.month);
+      return monthOrder.indexOf(a.month.slice(0, 3)) - monthOrder.indexOf(b.month.slice(0, 3));
     });
   }, [candidates, selectedClients, selectedRecruiters, selectedManagers, dateRange]);
 
   // Process status2 data for overview chart
   const status2OverviewData = useMemo(() => {
     const currentDate = new Date();
-    let months = [];
-    
-    // Generate months array for last 6 months
-    for (let i = 0; i < 6; i++) {
-      const date = subMonths(currentDate, i);
-      months.unshift({
-        year: getYear(date),
-        month: getMonth(date) + 1,
-        monthName: format(date, 'MMM yyyy'),
-        startDate: startOfMonth(date),
-        endDate: endOfMonth(date)
-      });
+    const months: Array<{ year: number; month: number; monthName: string }> = [];
+
+    // Build month buckets from selected range
+    if (timeRange === 'custom' && customDateRange?.from && customDateRange?.to) {
+      let cursor = new Date(customDateRange.from.getFullYear(), customDateRange.from.getMonth(), 1);
+      const endCursor = new Date(customDateRange.to.getFullYear(), customDateRange.to.getMonth(), 1);
+
+      while (cursor <= endCursor) {
+        months.push({
+          year: getYear(cursor),
+          month: getMonth(cursor) + 1,
+          monthName: format(cursor, 'MMM yyyy')
+        });
+        cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+      }
+    } else {
+      const monthsToShow = Number.parseInt(timeRange, 10) || 6;
+      for (let i = 0; i < monthsToShow; i++) {
+        const date = subMonths(currentDate, i);
+        months.unshift({
+          year: getYear(date),
+          month: getMonth(date) + 1,
+          monthName: format(date, 'MMM yyyy')
+        });
+      }
     }
 
     // Filter candidates
@@ -227,8 +248,11 @@ const InterviewConversionReport: React.FC = () => {
       if (selectedRecruiters.length > 0 && !selectedRecruiters.includes(candidate.recruiterName)) {
         return false;
       }
-      if (selectedManagers.length > 0 && !selectedManagers.includes(candidate.manager || '')) {
-        return false;
+      if (selectedManagers.length > 0) {
+        const candidateManager = (candidate.manager || '').trim();
+        if (!selectedManagers.includes(candidateManager)) {
+          return false;
+        }
       }
       return true;
     });
@@ -238,26 +262,19 @@ const InterviewConversionReport: React.FC = () => {
       filteredCandidates = filteredCandidates.filter(candidate => {
         const candidateDate = candidate.interviewDate;
         if (!candidateDate) return false;
-        return candidateDate >= dateRange.from! && candidateDate <= dateRange.to!;
+        return candidateDate >= dateRange.from && candidateDate <= dateRange.to;
       });
     }
 
     return months.map(monthInfo => {
-      let monthCandidates;
-      
-      if (dateRange?.from && dateRange?.to) {
-        // If date range is provided, use all filtered candidates
-        monthCandidates = filteredCandidates;
-      } else {
-        // Filter by year and month numbers to avoid timezone boundary issues
-        monthCandidates = filteredCandidates.filter(candidate => {
-          const candidateDate = candidate.interviewDate;
-          if (!candidateDate) return false;
-          const candidateYear = candidateDate.getFullYear();
-          const candidateMonth = candidateDate.getMonth() + 1;
-          return candidateYear === monthInfo.year && candidateMonth === monthInfo.month;
-        });
-      }
+      // Always filter by month bucket (prevents same totals repeated across all months)
+      const monthCandidates = filteredCandidates.filter(candidate => {
+        const candidateDate = candidate.interviewDate;
+        if (!candidateDate) return false;
+        const candidateYear = candidateDate.getFullYear();
+        const candidateMonth = candidateDate.getMonth() + 1;
+        return candidateYear === monthInfo.year && candidateMonth === monthInfo.month;
+      });
 
       // Count by status2 categories
       const statusCounts = {
@@ -277,7 +294,7 @@ const InterviewConversionReport: React.FC = () => {
 
       monthCandidates.forEach(candidate => {
         const status2 = candidate.status2;
-        
+
         if (status2 === 'Documentation') {
           statusCounts.Documentation++;
           statusCounts['SL-2+']++;
@@ -310,7 +327,15 @@ const InterviewConversionReport: React.FC = () => {
         ...statusCounts
       };
     });
-  }, [candidates, selectedClients, selectedRecruiters, selectedManagers, dateRange]);
+  }, [
+    candidates,
+    selectedClients,
+    selectedRecruiters,
+    selectedManagers,
+    dateRange,
+    timeRange,
+    customDateRange
+  ]);
 
   // Calculate percentage data
   const percentageData = useMemo((): PercentageDataItem[] => {

@@ -97,9 +97,11 @@ export const candidateService = {
       positionLength: candidate.position?.length
     });
 
-    // Normalize manager name - trim spaces and handle empty strings
+    // Normalize string fields to avoid reporting mismatches from trailing spaces/case variants
     const normalizedManager = candidate.manager ? candidate.manager.trim() : '';
-    
+    const normalizedStatus1 = candidate.status1 ? candidate.status1.trim() : '';
+    const normalizedStatus2 = candidate.status2 ? candidate.status2.trim() : '';
+
     // Ensure we have valid values for clientId
     const safeClientId = candidate.clientId && candidate.clientId.trim() !== '' ? candidate.clientId : null;
     
@@ -132,8 +134,8 @@ export const candidateService = {
         interview_time: candidate.interviewTime || '',
         interview_round: candidate.interviewRound || '',
         interview_mode: candidate.interviewMode || '',
-        status1: candidate.status1 || '',
-        status2: candidate.status2 || '',
+        status1: normalizedStatus1,
+        status2: normalizedStatus2,
         client_id: safeClientId,
         client_name: candidate.clientName || '',
         position: candidate.position || '',
@@ -198,8 +200,8 @@ export const candidateService = {
         interview_time: candidate.interviewTime || '',
         interview_round: candidate.interviewRound || '',
         interview_mode: candidate.interviewMode || '',
-        status1: candidate.status1 || '',
-        status2: candidate.status2 || '',
+        status1: normalizedStatus1,
+        status2: normalizedStatus2,
         client_id: safeClientId,
         client_name: candidate.clientName || '',
         position: candidate.position || '',
@@ -268,7 +270,9 @@ export const candidateService = {
       let query = supabase
         .from('candidates')
         .select('*')
-        .order('created_at', { ascending: false })
+        // Use deterministic ordering for paginated ranges to avoid duplicate/missed rows
+        .order('created_at', { ascending: false, nullsFirst: false })
+        .order('id', { ascending: false })
         .range(from, from + PAGE_SIZE - 1);
 
       if (searchTerm) {
@@ -291,26 +295,34 @@ export const candidateService = {
       }
     }
 
-    console.log('FETCH CANDIDATES DEBUG - Total fetched (all pages):', allData.length);
+    // Defensive de-duplication by candidate id (handles unstable pagination edge cases)
+    const dedupedById = new Map<string, any>();
+    allData.forEach((row) => {
+      if (row?.id) dedupedById.set(row.id, row);
+    });
+    const dedupedData = Array.from(dedupedById.values());
 
-    const candidates: Candidate[] = allData.map(candidate => ({
+    console.log('FETCH CANDIDATES DEBUG - Total fetched (all pages):', allData.length);
+    console.log('FETCH CANDIDATES DEBUG - Unique rows after dedupe:', dedupedData.length);
+
+    const candidates: Candidate[] = dedupedData.map(candidate => ({
       id: candidate.id,
-      name: candidate.name,
-      contactNumber: candidate.contact_number,
-      email: candidate.email,
+      name: (candidate.name ?? '').trim(),
+      contactNumber: (candidate.contact_number ?? '').toString(),
+      email: (candidate.email ?? '').trim(),
       interviewDate: candidate.interview_date ? fromIndiaTimezone(candidate.interview_date) : null,
-      interviewTime: candidate.interview_time,
-      interviewRound: candidate.interview_round,
-      interviewMode: candidate.interview_mode,
-      status1: candidate.status1,
-      status2: candidate.status2,
+      interviewTime: (candidate.interview_time ?? '').trim(),
+      interviewRound: (candidate.interview_round ?? '').toString().trim(),
+      interviewMode: (candidate.interview_mode ?? '').trim(),
+      status1: (candidate.status1 ?? '').trim(),
+      status2: (candidate.status2 ?? '').trim(),
       clientId: candidate.client_id,
-      clientName: candidate.client_name,
-      position: candidate.position,
-      recruiterName: candidate.recruiter_name,
+      clientName: (candidate.client_name ?? '').trim(),
+      position: (candidate.position ?? '').trim(),
+      recruiterName: (candidate.recruiter_name ?? '').trim(),
       dateInformed: candidate.date_informed ? fromIndiaTimezone(candidate.date_informed) : null,
       remarks: candidate.remarks || '',
-      manager: candidate.Manager || '',
+      manager: (candidate.Manager ?? '').trim(),
     }));
 
     console.log('FETCH CANDIDATES DEBUG - Total candidates mapped:', candidates.length);
