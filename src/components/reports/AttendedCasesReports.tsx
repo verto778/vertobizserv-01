@@ -16,7 +16,7 @@ import { useFilteredData } from '@/hooks/useFilteredData';
 import ReportFilters from './ReportFilters';
 import AttendedCasesChart from './AttendedCasesChart';
 import { toast } from '@/hooks/use-toast';
-import { getMonth, getYear, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { Candidate } from '@/components/candidates/types';
 import { candidateService } from '@/services/candidateService';
 
