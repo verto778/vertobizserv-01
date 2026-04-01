@@ -126,29 +126,33 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
 
   // Process candidates data for attended cases analysis
   const attendedCasesData = useMemo((): AttendedCasesData[] => {
-    console.log('Processing attended cases data with candidates:', candidates.length);
-    
     const currentDate = new Date();
-    let months = [];
-    
-    // Handle custom date range
+    let months: Array<{
+      key: string;
+      monthName: string;
+      startDate: Date;
+      endDate: Date;
+    }> = [];
+
     if (timeRange === 'custom' && customDateRange?.from && customDateRange?.to) {
-      // For custom date range, create a single period
-      months = [{
-        year: getYear(customDateRange.from),
-        month: getMonth(customDateRange.from) + 1,
-        monthName: `${format(customDateRange.from, 'MMM dd')} - ${format(customDateRange.to, 'MMM dd, yyyy')}`,
-        startDate: customDateRange.from,
-        endDate: customDateRange.to
-      }];
+      let cursor = new Date(customDateRange.from.getFullYear(), customDateRange.from.getMonth(), 1);
+      const endCursor = new Date(customDateRange.to.getFullYear(), customDateRange.to.getMonth(), 1);
+
+      while (cursor <= endCursor) {
+        months.push({
+          key: format(cursor, 'yyyy-MM'),
+          monthName: format(cursor, 'MMM yyyy'),
+          startDate: startOfMonth(cursor),
+          endDate: endOfMonth(cursor)
+        });
+        cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+      }
     } else {
-      // Generate months array for predefined ranges
-      const monthsToShow = parseInt(timeRange);
+      const monthsToShow = parseInt(timeRange, 10) || 6;
       for (let i = 0; i < monthsToShow; i++) {
         const date = subMonths(currentDate, i);
         months.unshift({
-          year: getYear(date),
-          month: getMonth(date) + 1,
+          key: format(date, 'yyyy-MM'),
           monthName: format(date, 'MMM yyyy'),
           startDate: startOfMonth(date),
           endDate: endOfMonth(date)
@@ -156,91 +160,67 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
       }
     }
 
-    console.log('Generated months:', months.map(m => m.monthName));
-
-    // Filter candidates
     let filteredCandidates = candidates.filter(candidate => {
-      // Filter by selected clients
       if (finalSelectedClients.length > 0 && !finalSelectedClients.includes(candidate.clientName)) {
         return false;
       }
-      
-      // Filter by selected recruiters
+
       if (finalSelectedRecruiters.length > 0 && !finalSelectedRecruiters.includes(candidate.recruiterName)) {
         return false;
       }
-      
-      // Filter by selected managers
+
       if (finalSelectedManagers.length > 0) {
         const candidateManager = (candidate.manager || '').trim();
         const normalizedSelectedManagers = finalSelectedManagers.map(m => m.trim());
-        
+
         if (!normalizedSelectedManagers.includes(candidateManager)) {
           return false;
         }
       }
-      
+
       return true;
     });
 
-    console.log('DEBUG: Total candidates before filtering:', candidates.length);
-    console.log('DEBUG: Candidates with Attended status:', candidates.filter(c => c.status1 === 'Attended').length);
-    console.log('DEBUG: After date/client/recruiter filter:', filteredCandidates.length);
-    
-    // Debug manager data
-    const managerCounts = {};
-    filteredCandidates.forEach(candidate => {
-      const manager = (candidate.manager || '').trim();
-      const managerKey = manager || '[No Manager]';
-      managerCounts[managerKey] = (managerCounts[managerKey] || 0) + 1;
-    });
-    console.log('DEBUG: Manager distribution in filtered data:', managerCounts);
-    
-    if (finalSelectedManagers.length > 0) {
-      console.log('DEBUG: Selected managers for filtering:', finalSelectedManagers);
-      const afterManagerFilter = filteredCandidates.filter(candidate => {
-        const candidateManager = (candidate.manager || '').trim();
-        const normalizedSelectedManagers = finalSelectedManagers.map(m => m.trim());
-        return normalizedSelectedManagers.includes(candidateManager);
+    if (dateRange?.from && dateRange?.to) {
+      filteredCandidates = filteredCandidates.filter(candidate => {
+        const candidateDate = candidate.interviewDate;
+        if (!candidateDate) return false;
+        return candidateDate >= dateRange.from! && candidateDate <= dateRange.to!;
       });
-      console.log('DEBUG: After manager filter applied:', afterManagerFilter.length);
-      console.log('DEBUG: Candidates by selected managers:', 
-        finalSelectedManagers.map(manager => ({
-          manager,
-          count: afterManagerFilter.filter(c => (c.manager || '').trim() === manager.trim()).length
-        }))
-      );
     }
-    console.log('Candidates with missing dateInformed:', filteredCandidates.filter(c => !c.dateInformed).length);
-    console.log('Sample candidates with dates:', filteredCandidates.slice(0, 5).map(c => ({ name: c.name, dateInformed: c.dateInformed, status1: c.status1 })));
 
-    // Process data by month
-    const monthlyData = months.map(monthInfo => {
-      let monthCandidates;
-      
-      if (dateRange?.from && dateRange?.to) {
-        // If parent date range is provided, filter by the parent date range
-        monthCandidates = filteredCandidates.filter(candidate => {
-          const candidateDate = candidate.interviewDate;
-          if (!candidateDate) return false;
-          return candidateDate >= dateRange.from! && candidateDate <= dateRange.to!;
-        });
-      } else {
-        // Filter by year and month numbers to avoid timezone boundary issues
-        monthCandidates = filteredCandidates.filter(candidate => {
-          const candidateDate = candidate.interviewDate;
-          if (!candidateDate) return false;
-          
-          const candidateYear = candidateDate.getFullYear();
-          const candidateMonth = candidateDate.getMonth() + 1;
-          return candidateYear === monthInfo.year && candidateMonth === monthInfo.month;
-        });
+    const monthlyBuckets = filteredCandidates.reduce<Record<string, AttendedCasesData>>((acc, candidate) => {
+      const candidateDate = candidate.interviewDate;
+      if (!candidateDate) return acc;
+
+      const monthKey = format(candidateDate, 'yyyy-MM');
+      if (!acc[monthKey]) {
+        acc[monthKey] = {
+          month: format(candidateDate, 'MMM yyyy'),
+          Attended: 0,
+          'Client Conf Pending': 0,
+          Confirmed: 0,
+          'Not Attended': 0,
+          'Not Interested': 0,
+          'Position Hold': 0,
+          Reschedule: 0,
+          'Yet to Confirm': 0,
+        };
       }
 
-      console.log(`Month ${monthInfo.monthName} candidates:`, monthCandidates.length);
+      const categories = ['Attended', 'Client Conf Pending', 'Confirmed', 'Not Attended', 'Not Interested', 'Position Hold', 'Reschedule', 'Yet to Confirm'] as const;
+      const matchingCategory = categories.find(category => checkCandidateStatus(candidate, category));
 
-      // Count by status categories
-      const statusCounts = {
+      if (matchingCategory) {
+        acc[monthKey][matchingCategory] += 1;
+      }
+
+      return acc;
+    }, {});
+
+    return months.map(({ key, monthName }) => (
+      monthlyBuckets[key] || {
+        month: monthName,
         Attended: 0,
         'Client Conf Pending': 0,
         Confirmed: 0,
@@ -248,44 +228,9 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
         'Not Interested': 0,
         'Position Hold': 0,
         Reschedule: 0,
-        'Yet to Confirm': 0
-      };
-
-      monthCandidates.forEach(candidate => {
-        console.log(`Candidate ${candidate.name} has status1: ${candidate.status1}`);
-        
-        // Check each category using status1
-        const categories = ['Attended', 'Client Conf Pending', 'Confirmed', 'Not Attended', 'Not Interested', 'Position Hold', 'Reschedule', 'Yet to Confirm'];
-        let categorized = false;
-        
-        for (const category of categories) {
-          if (checkCandidateStatus(candidate, category)) {
-            statusCounts[category as keyof typeof statusCounts]++;
-            categorized = true;
-            console.log(`Categorized as ${category}`);
-            break;
-          }
-        }
-        
-        // Log if not categorized (this should rarely happen now)
-        if (!categorized) {
-          console.log(`Status1 '${candidate.status1}' not recognized for candidate ${candidate.name}`);
-        }
-      });
-
-      console.log(`${monthInfo.monthName} status counts:`, statusCounts);
-
-      return {
-        month: monthInfo.monthName,
-        ...statusCounts
-      };
-    });
-
-    // If using date range from parent, return the monthly data as-is
-    // (the date filtering was already applied in the monthlyData processing above)
-
-    console.log('Final monthly data:', monthlyData);
-    return monthlyData;
+        'Yet to Confirm': 0,
+      }
+    ));
   }, [candidates, finalSelectedClients, finalSelectedRecruiters, finalSelectedManagers, timeRange, customDateRange, dateRange]);
 
   // Calculate percentage data for Report2b - fixed logic with accurate percentages that sum to 100%
