@@ -276,6 +276,9 @@ const InterviewConversionReport: React.FC = () => {
         return candidateYear === monthInfo.year && candidateMonth === monthInfo.month;
       });
 
+      // Only include candidates whose status1 is 'Attended' for the Attended Cases tab
+      const attendedCandidates = monthCandidates.filter(c => (c.status1 || '').trim() === 'Attended');
+
       // Count by status2 categories
       const statusCounts = {
         Documentation: 0,
