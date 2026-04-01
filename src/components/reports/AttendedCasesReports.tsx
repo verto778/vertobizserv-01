@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Calendar, Filter, BarChart3 } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
-import { format } from 'date-fns';
+
 import { cn } from '@/lib/utils';
 import { useCandidateManagement } from '@/hooks/useCandidateManagement';
 import { useClientData } from '@/hooks/useClientData';
