@@ -295,7 +295,7 @@ const InterviewConversionReport: React.FC = () => {
         'SL-2+': 0
       };
 
-      monthCandidates.forEach(candidate => {
+      attendedCandidates.forEach(candidate => {
         const status2 = candidate.status2;
 
         if (status2 === 'Documentation') {
