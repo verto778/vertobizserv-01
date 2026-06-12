@@ -20,6 +20,7 @@ import RecruiterManagement from "./pages/RecruiterManagement";
 import PositionManagement from './pages/PositionManagement';
 import AdminPanel from './pages/AdminPanel';
 import Reports from './pages/Reports';
+import FilterTest from './pages/__FilterTest';
 
 const queryClient = new QueryClient();
 
