@@ -340,15 +340,13 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
                             {sortPositionsAlphabetically ? 'Default' : 'A-Z'}
                           </Button>
                         </div>
-                        <ScrollArea className="h-[200px]">
-                          <div className="p-1">
-                            {sortedPositions.map((position) => (
-                              <SelectItem key={position.id} value={position.name}>
-                                {position.name}
-                              </SelectItem>
-                            ))}
-                          </div>
-                        </ScrollArea>
+                        <div className="max-h-[200px] overflow-y-auto p-1">
+                          {sortedPositions.map((position) => (
+                            <SelectItem key={position.id} value={position.name}>
+                              {position.name}
+                            </SelectItem>
+                          ))}
+                        </div>
                       </>
                     )}
                     {filters.clientName && sortedPositions.length === 0 && (
