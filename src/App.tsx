@@ -64,7 +64,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             {/* Public routes */}
-            <Route path="/__filter-test" element={React.createElement(require('./pages/__FilterTest').default)} />
+            <Route path="/__filter-test" element={<FilterTest />} />
             <Route path="/landing" element={!user ? <Landing /> : <Navigate to="/" />} />
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
             <Route path="/reset-password" element={!user ? <ResetPassword /> : <Navigate to="/" />} />
