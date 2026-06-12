@@ -20,7 +20,6 @@ import RecruiterManagement from "./pages/RecruiterManagement";
 import PositionManagement from './pages/PositionManagement';
 import AdminPanel from './pages/AdminPanel';
 import Reports from './pages/Reports';
-import FilterTest from './pages/__FilterTest';
 
 const queryClient = new QueryClient();
 
@@ -64,7 +63,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             {/* Public routes */}
-            <Route path="/__filter-test" element={<FilterTest />} />
+            
             <Route path="/landing" element={!user ? <Landing /> : <Navigate to="/" />} />
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
             <Route path="/reset-password" element={!user ? <ResetPassword /> : <Navigate to="/" />} />
