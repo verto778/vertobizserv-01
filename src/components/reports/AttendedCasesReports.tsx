@@ -55,7 +55,7 @@ const statusCategories = [
 ] as const;
 
 const status1ToCategory = new Map<string, typeof statusCategories[number]>(
-  statusCategories.map(category => [category.trim().toLowerCase(), category])
+  statusCategories.map(category => [category.trim().toLowerCase(), category] as [string, typeof statusCategories[number]])
 );
 
 const getInterviewMonthKey = (date: Date) => formatInTimeZone(date, INDIA_TIMEZONE, 'yyyy-MM');
