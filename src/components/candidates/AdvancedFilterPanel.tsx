@@ -302,8 +302,8 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
                     </div>
                     <div className="max-h-[200px] overflow-y-auto p-1">
                       {sortedClients.map((client) => (
-                        <SelectItem key={client.id} value={client.companyName}>
-                          {client.companyName}
+                        <SelectItem key={client.id} value={client.companyName.trim()}>
+                          {client.companyName.trim()}
                         </SelectItem>
                       ))}
                     </div>
@@ -343,8 +343,8 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
                         </div>
                         <div className="max-h-[200px] overflow-y-auto p-1">
                           {sortedPositions.map((position) => (
-                            <SelectItem key={position.id} value={position.name}>
-                              {position.name}
+                            <SelectItem key={position.id} value={position.name.trim()}>
+                              {position.name.trim()}
                             </SelectItem>
                           ))}
                         </div>
