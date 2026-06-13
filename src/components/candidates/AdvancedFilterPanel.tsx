@@ -3,7 +3,6 @@ import { ChevronDown, ChevronUp, X, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
@@ -64,7 +63,7 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
   // Get the selected client ID based on the client name
   const selectedClientId = useMemo(() => {
     if (!filters.clientName) return '';
-    const selectedClient = clients.find(client => client.companyName === filters.clientName);
+    const selectedClient = clients.find(client => client.companyName?.trim() === filters.clientName.trim());
     return selectedClient?.id || '';
   }, [filters.clientName, clients]);
 
@@ -80,10 +79,11 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
 
   // Sort clients based on the toggle state
   const sortedClients = useMemo(() => {
-    if (!sortClientsAlphabetically) return clients;
+    const validClients = clients.filter(client => client.companyName?.trim());
+    if (!sortClientsAlphabetically) return validClients;
     
-    return [...clients].sort((a, b) => 
-      a.companyName.toLowerCase().localeCompare(b.companyName.toLowerCase())
+    return [...validClients].sort((a, b) => 
+      a.companyName.trim().toLowerCase().localeCompare(b.companyName.trim().toLowerCase())
     );
   }, [clients, sortClientsAlphabetically]);
 
@@ -97,10 +97,11 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
 
   // Sort positions based on the toggle state
   const sortedPositions = useMemo(() => {
-    if (!sortPositionsAlphabetically) return availablePositions;
+    const validPositions = availablePositions.filter(position => position.name?.trim());
+    if (!sortPositionsAlphabetically) return validPositions;
     
-    return [...availablePositions].sort((a, b) => 
-      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    return [...validPositions].sort((a, b) => 
+      a.name.trim().toLowerCase().localeCompare(b.name.trim().toLowerCase())
     );
   }, [availablePositions, sortPositionsAlphabetically]);
 
