@@ -148,8 +148,8 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
 
       while (cursor <= endCursor) {
         months.push({
-          key: format(cursor, 'yyyy-MM'),
-          monthName: format(cursor, 'MMM yyyy'),
+          key: getInterviewMonthKey(cursor),
+          monthName: getMonthLabel(cursor),
           startDate: startOfMonth(cursor),
           endDate: endOfMonth(cursor)
         });
@@ -160,8 +160,8 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
       for (let i = 0; i < monthsToShow; i++) {
         const date = subMonths(currentDate, i);
         months.unshift({
-          key: format(date, 'yyyy-MM'),
-          monthName: format(date, 'MMM yyyy'),
+          key: getInterviewMonthKey(date),
+          monthName: getMonthLabel(date),
           startDate: startOfMonth(date),
           endDate: endOfMonth(date)
         });
@@ -201,23 +201,12 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
       const candidateDate = candidate.interviewDate;
       if (!candidateDate) return acc;
 
-      const monthKey = format(candidateDate, 'yyyy-MM');
+      const monthKey = getInterviewMonthKey(candidateDate);
       if (!acc[monthKey]) {
-        acc[monthKey] = {
-          month: format(candidateDate, 'MMM yyyy'),
-          Attended: 0,
-          'Client Conf Pending': 0,
-          Confirmed: 0,
-          'Not Attended': 0,
-          'Not Interested': 0,
-          'Position Hold': 0,
-          Reschedule: 0,
-          'Yet to Confirm': 0,
-        };
+        acc[monthKey] = createEmptyMonthData(getMonthLabel(candidateDate));
       }
 
-      const categories = ['Attended', 'Client Conf Pending', 'Confirmed', 'Not Attended', 'Not Interested', 'Position Hold', 'Reschedule', 'Yet to Confirm'] as const;
-      const matchingCategory = categories.find(category => checkCandidateStatus(candidate, category));
+      const matchingCategory = statusCategories.find(category => checkCandidateStatus(candidate, category));
 
       if (matchingCategory) {
         acc[monthKey][matchingCategory] += 1;
@@ -227,17 +216,7 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
     }, {});
 
     return months.map(({ key, monthName }) => (
-      monthlyBuckets[key] || {
-        month: monthName,
-        Attended: 0,
-        'Client Conf Pending': 0,
-        Confirmed: 0,
-        'Not Attended': 0,
-        'Not Interested': 0,
-        'Position Hold': 0,
-        Reschedule: 0,
-        'Yet to Confirm': 0,
-      }
+      monthlyBuckets[key] || createEmptyMonthData(monthName)
     ));
   }, [candidates, finalSelectedClients, finalSelectedRecruiters, finalSelectedManagers, timeRange, customDateRange, dateRange]);
 
