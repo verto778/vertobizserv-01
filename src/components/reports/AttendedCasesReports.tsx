@@ -17,6 +17,7 @@ import ReportFilters from './ReportFilters';
 import AttendedCasesChart from './AttendedCasesChart';
 import { toast } from '@/hooks/use-toast';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { Candidate } from '@/components/candidates/types';
 import { candidateService } from '@/services/candidateService';
 
@@ -39,6 +40,39 @@ interface AttendedCasesReportsProps {
   dateRange?: { from?: Date; to?: Date };
   managers?: { id: string; name: string; }[];
 }
+
+const INDIA_TIMEZONE = 'Asia/Kolkata';
+
+const statusCategories = [
+  'Attended',
+  'Client Conf Pending',
+  'Confirmed',
+  'Not Attended',
+  'Not Interested',
+  'Position Hold',
+  'Reschedule',
+  'Yet to Confirm'
+] as const;
+
+const status1ToCategory = new Map<string, typeof statusCategories[number]>(
+  statusCategories.map(category => [category.trim().toLowerCase(), category])
+);
+
+const getInterviewMonthKey = (date: Date) => formatInTimeZone(date, INDIA_TIMEZONE, 'yyyy-MM');
+
+const getMonthLabel = (date: Date) => formatInTimeZone(date, INDIA_TIMEZONE, 'MMM yyyy');
+
+const createEmptyMonthData = (month: string): AttendedCasesData => ({
+  month,
+  Attended: 0,
+  'Client Conf Pending': 0,
+  Confirmed: 0,
+  'Not Attended': 0,
+  'Not Interested': 0,
+  'Position Hold': 0,
+  Reschedule: 0,
+  'Yet to Confirm': 0,
+});
 
 const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
   selectedClients = [],
@@ -94,34 +128,8 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
 
   // Custom status checking function for new 8 categories based on status1
   const checkCandidateStatus = (candidate: Candidate, category: string): boolean => {
-    switch (category) {
-      case 'Attended':
-        return candidate.status1 === 'Attended';
-        
-      case 'Client Conf Pending':
-        return candidate.status1 === 'Client Conf Pending';
-        
-      case 'Confirmed':
-        return candidate.status1 === 'Confirmed';
-        
-      case 'Not Attended':
-        return candidate.status1 === 'Not Attended';
-        
-      case 'Not Interested':
-        return candidate.status1 === 'Not Interested';
-        
-      case 'Position Hold':
-        return candidate.status1 === 'Position Hold';
-        
-      case 'Reschedule':
-        return candidate.status1 === 'Reschedule';
-        
-      case 'Yet to Confirm':
-        return candidate.status1 === 'Yet to Confirm';
-        
-      default:
-        return false;
-    }
+    const normalizedStatus1 = (candidate.status1 || '').trim().toLowerCase();
+    return status1ToCategory.get(normalizedStatus1) === category;
   };
 
   // Process candidates data for attended cases analysis
