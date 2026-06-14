@@ -35,26 +35,35 @@ export const useFilteredData = () => {
       // Build the filter condition
       let filterQuery = query.select('*');
       
+      // For candidate exports, filter by interview_date (date column).
+      // For client exports or dashboard time-period queries, keep created_at.
+      const isCandidateExport = options.dataType === 'candidates' && !!options.exportType;
+      const dateColumn = isCandidateExport ? 'interview_date' : 'created_at';
+
       // Handle month/year-based filtering for exports
       if (options.exportType === 'month' && options.selectedYearValue) {
         let startDate: Date;
         let endDate: Date;
         
         if (options.selectedMonthValue) {
-          // Specific month and year
           startDate = new Date(options.selectedYearValue, options.selectedMonthValue - 1, 1);
           endDate = endOfMonth(startDate);
-          console.log(`Filtering for specific month: ${startDate} to ${endDate}`);
         } else {
-          // Entire year
           startDate = startOfYear(new Date(options.selectedYearValue, 0, 1));
           endDate = endOfYear(new Date(options.selectedYearValue, 0, 1));
-          console.log(`Filtering for entire year: ${startDate} to ${endDate}`);
         }
-        
-        filterQuery = filterQuery
-          .gte('created_at', startDate.toISOString())
-          .lte('created_at', endDate.toISOString());
+        console.log(`Filtering ${options.dataType} on ${dateColumn}: ${startDate} to ${endDate}`);
+
+        if (isCandidateExport) {
+          // interview_date is a DATE column - use yyyy-MM-dd strings
+          filterQuery = filterQuery
+            .gte(dateColumn, format(startDate, 'yyyy-MM-dd'))
+            .lte(dateColumn, format(endDate, 'yyyy-MM-dd'));
+        } else {
+          filterQuery = filterQuery
+            .gte(dateColumn, startDate.toISOString())
+            .lte(dateColumn, endDate.toISOString());
+        }
       }
       // Apply date filters if provided for range exports
       else if (options.exportType === 'range' && options.dateRange.from && options.dateRange.to && 
@@ -62,11 +71,17 @@ export const useFilteredData = () => {
         const fromDate = format(options.dateRange.from, 'yyyy-MM-dd');
         const toDate = format(options.dateRange.to, 'yyyy-MM-dd');
         
-        console.log(`Filtering for date range: ${fromDate} to ${toDate}`);
+        console.log(`Filtering ${options.dataType} range on ${dateColumn}: ${fromDate} to ${toDate}`);
         
-        filterQuery = filterQuery
-          .gte('created_at', `${fromDate}T00:00:00`)
-          .lte('created_at', `${toDate}T23:59:59`);
+        if (isCandidateExport) {
+          filterQuery = filterQuery
+            .gte(dateColumn, fromDate)
+            .lte(dateColumn, toDate);
+        } else {
+          filterQuery = filterQuery
+            .gte(dateColumn, `${fromDate}T00:00:00`)
+            .lte(dateColumn, `${toDate}T23:59:59`);
+        }
       } 
       // If no date range but time period is specified (for dashboard)
       else if (options.timePeriod && !options.exportType) {
@@ -80,8 +95,9 @@ export const useFilteredData = () => {
         filterQuery = filterQuery.gte('created_at', pastDate.toISOString());
       }
 
-      // Execute the query
-      const { data: fetchedData, error } = await filterQuery.order('created_at', { ascending: false });
+      // Execute the query - order by the filter date column for candidates
+      const orderColumn = isCandidateExport ? 'interview_date' : 'created_at';
+      const { data: fetchedData, error } = await filterQuery.order(orderColumn, { ascending: false, nullsFirst: false });
 
       if (error) {
         console.error('Supabase query error:', error);
