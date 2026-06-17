@@ -35,10 +35,10 @@ export const useFilteredData = () => {
       // Build the filter condition
       let filterQuery = query.select('*');
       
-      // For candidate exports, filter by interview_date (date column).
+      // For candidate exports, filter by date_informed (Informed Date - DATE column).
       // For client exports or dashboard time-period queries, keep created_at.
       const isCandidateExport = options.dataType === 'candidates' && !!options.exportType;
-      const dateColumn = isCandidateExport ? 'interview_date' : 'created_at';
+      const dateColumn = isCandidateExport ? 'date_informed' : 'created_at';
 
       // Handle month/year-based filtering for exports
       if (options.exportType === 'month' && options.selectedYearValue) {
@@ -96,7 +96,7 @@ export const useFilteredData = () => {
       }
 
       // Execute the query - order by the filter date column for candidates
-      const orderColumn = isCandidateExport ? 'interview_date' : 'created_at';
+      const orderColumn = isCandidateExport ? 'date_informed' : 'created_at';
       const { data: fetchedData, error } = await filterQuery.order(orderColumn, { ascending: false, nullsFirst: false });
 
       if (error) {

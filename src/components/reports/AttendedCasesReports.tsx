@@ -191,14 +191,14 @@ const AttendedCasesReports: React.FC<AttendedCasesReportsProps> = ({
 
     if (dateRange?.from && dateRange?.to) {
       filteredCandidates = filteredCandidates.filter(candidate => {
-        const candidateDate = candidate.interviewDate;
+        const candidateDate = candidate.dateInformed;
         if (!candidateDate) return false;
         return candidateDate >= dateRange.from! && candidateDate <= dateRange.to!;
       });
     }
 
     const monthlyBuckets = filteredCandidates.reduce<Record<string, AttendedCasesData>>((acc, candidate) => {
-      const candidateDate = candidate.interviewDate;
+      const candidateDate = candidate.dateInformed;
       if (!candidateDate) return acc;
 
       const monthKey = getInterviewMonthKey(candidateDate);
