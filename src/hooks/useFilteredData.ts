@@ -96,7 +96,7 @@ export const useFilteredData = () => {
       }
 
       // Execute the query - order by the filter date column for candidates
-      const orderColumn = isCandidateExport ? 'interview_date' : 'created_at';
+      const orderColumn = isCandidateExport ? 'date_informed' : 'created_at';
       const { data: fetchedData, error } = await filterQuery.order(orderColumn, { ascending: false, nullsFirst: false });
 
       if (error) {
