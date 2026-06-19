@@ -167,7 +167,7 @@ const InterviewConversionReport: React.FC = () => {
     const monthlyGroups: { [key: string]: Candidate[] } = {};
     
     filteredCandidates.forEach(candidate => {
-      const candidateDate = candidate.interviewDate;
+      const candidateDate = candidate.dateInformed;
       if (!candidateDate) return;
       
       const monthKey = `${candidateDate.getFullYear()}-${candidateDate.getMonth() + 1}`;
