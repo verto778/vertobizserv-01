@@ -260,7 +260,7 @@ const InterviewConversionReport: React.FC = () => {
     // Apply date range filter if provided
     if (dateRange?.from && dateRange?.to) {
       filteredCandidates = filteredCandidates.filter(candidate => {
-        const candidateDate = candidate.interviewDate;
+        const candidateDate = candidate.dateInformed;
         if (!candidateDate) return false;
         return candidateDate >= dateRange.from && candidateDate <= dateRange.to;
       });
