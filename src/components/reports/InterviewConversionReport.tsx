@@ -154,10 +154,10 @@ const InterviewConversionReport: React.FC = () => {
       return true;
     });
 
-    // Apply date filtering based on date range using interviewDate column
+    // Apply date filtering based on date range using dateInformed column
     if (dateRange?.from && dateRange?.to) {
       filteredCandidates = filteredCandidates.filter(candidate => {
-        const candidateDate = candidate.interviewDate;
+        const candidateDate = candidate.dateInformed;
         if (!candidateDate) return false;
         return candidateDate >= dateRange.from! && candidateDate <= dateRange.to!;
       });
@@ -167,7 +167,7 @@ const InterviewConversionReport: React.FC = () => {
     const monthlyGroups: { [key: string]: Candidate[] } = {};
     
     filteredCandidates.forEach(candidate => {
-      const candidateDate = candidate.interviewDate;
+      const candidateDate = candidate.dateInformed;
       if (!candidateDate) return;
       
       const monthKey = `${candidateDate.getFullYear()}-${candidateDate.getMonth() + 1}`;
@@ -260,7 +260,7 @@ const InterviewConversionReport: React.FC = () => {
     // Apply date range filter if provided
     if (dateRange?.from && dateRange?.to) {
       filteredCandidates = filteredCandidates.filter(candidate => {
-        const candidateDate = candidate.interviewDate;
+        const candidateDate = candidate.dateInformed;
         if (!candidateDate) return false;
         return candidateDate >= dateRange.from && candidateDate <= dateRange.to;
       });
@@ -269,7 +269,7 @@ const InterviewConversionReport: React.FC = () => {
     return months.map(monthInfo => {
       // Always filter by month bucket (prevents same totals repeated across all months)
       const monthCandidates = filteredCandidates.filter(candidate => {
-        const candidateDate = candidate.interviewDate;
+        const candidateDate = candidate.dateInformed;
         if (!candidateDate) return false;
         const candidateYear = candidateDate.getFullYear();
         const candidateMonth = candidateDate.getMonth() + 1;
