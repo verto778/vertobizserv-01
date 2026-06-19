@@ -269,7 +269,7 @@ const InterviewConversionReport: React.FC = () => {
     return months.map(monthInfo => {
       // Always filter by month bucket (prevents same totals repeated across all months)
       const monthCandidates = filteredCandidates.filter(candidate => {
-        const candidateDate = candidate.interviewDate;
+        const candidateDate = candidate.dateInformed;
         if (!candidateDate) return false;
         const candidateYear = candidateDate.getFullYear();
         const candidateMonth = candidateDate.getMonth() + 1;
