@@ -55,10 +55,13 @@ export const useFilteredData = () => {
         console.log(`Filtering ${options.dataType} on ${dateColumn}: ${startDate} to ${endDate}`);
 
         if (isCandidateExport) {
-          // interview_date is a DATE column - use yyyy-MM-dd strings
+          // date_informed may be stored as timestamp; use IST-bounded ISO range
+          // to ensure the 1st of the month (IST) is included.
+          const fromISO = `${format(startDate, 'yyyy-MM-dd')}T00:00:00+05:30`;
+          const toISO = `${format(endDate, 'yyyy-MM-dd')}T23:59:59+05:30`;
           filterQuery = filterQuery
-            .gte(dateColumn, format(startDate, 'yyyy-MM-dd'))
-            .lte(dateColumn, format(endDate, 'yyyy-MM-dd'));
+            .gte(dateColumn, fromISO)
+            .lte(dateColumn, toISO);
         } else {
           filterQuery = filterQuery
             .gte(dateColumn, startDate.toISOString())
@@ -75,14 +78,15 @@ export const useFilteredData = () => {
         
         if (isCandidateExport) {
           filterQuery = filterQuery
-            .gte(dateColumn, fromDate)
-            .lte(dateColumn, toDate);
+            .gte(dateColumn, `${fromDate}T00:00:00+05:30`)
+            .lte(dateColumn, `${toDate}T23:59:59+05:30`);
         } else {
           filterQuery = filterQuery
             .gte(dateColumn, `${fromDate}T00:00:00`)
             .lte(dateColumn, `${toDate}T23:59:59`);
         }
       } 
+
       // If no date range but time period is specified (for dashboard)
       else if (options.timePeriod && !options.exportType) {
         const today = new Date();
